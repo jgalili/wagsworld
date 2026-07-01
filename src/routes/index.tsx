@@ -598,6 +598,97 @@ function Index() {
 
         {/* RIGHT: fixtures + tip */}
         <motion.div {...fade(0.45)} className="md:col-span-3 space-y-12">
+          {/* Live match */}
+          <motion.section
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6 }}
+            className="relative overflow-hidden rounded-sm border border-primary/40 bg-gradient-to-br from-primary/10 via-background/40 to-background/40 backdrop-blur-md p-5 shadow-[0_0_50px_-15px_var(--primary)]"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="inline-flex items-center gap-2">
+                <span className="relative flex size-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                  <span className="relative inline-flex rounded-full size-2.5 bg-primary" />
+                </span>
+                <span className="font-mono text-[10px] uppercase tracking-widest text-primary font-bold">
+                  {t.liveBadge} · {t.liveTitle}
+                </span>
+              </div>
+              <span className="font-mono text-[10px] tabular-nums text-primary">
+                {live.minute}' {t.liveMinute}
+              </span>
+            </div>
+
+            <div dir="ltr" className="flex items-center justify-between gap-2 mb-5">
+              <div className="text-center flex-1">
+                <p className="font-mono text-[10px] uppercase text-muted-foreground">FRA</p>
+                <motion.p
+                  key={live.score[0]}
+                  initial={{ scale: 1.4, color: "var(--primary)" }}
+                  animate={{ scale: 1, color: "var(--foreground)" }}
+                  transition={{ duration: 0.4 }}
+                  className="text-4xl font-extrabold tabular-nums"
+                >
+                  {live.score[0]}
+                </motion.p>
+              </div>
+              <span className="font-display text-2xl italic text-muted-foreground">—</span>
+              <div className="text-center flex-1">
+                <p className="font-mono text-[10px] uppercase text-muted-foreground">ARG</p>
+                <motion.p
+                  key={live.score[1]}
+                  initial={{ scale: 1.4, color: "var(--primary)" }}
+                  animate={{ scale: 1, color: "var(--foreground)" }}
+                  transition={{ duration: 0.4 }}
+                  className="text-4xl font-extrabold tabular-nums"
+                >
+                  {live.score[1]}
+                </motion.p>
+              </div>
+            </div>
+
+            {/* Possession bar */}
+            <div className="space-y-3 text-[11px] font-mono">
+              <div>
+                <div className="flex justify-between mb-1 tabular-nums">
+                  <span>{live.possession[0]}%</span>
+                  <span className="uppercase text-muted-foreground">{t.livePossession}</span>
+                  <span>{live.possession[1]}%</span>
+                </div>
+                <div dir="ltr" className="flex h-1.5 rounded-full overflow-hidden bg-muted">
+                  <motion.div
+                    animate={{ width: `${live.possession[0]}%` }}
+                    transition={{ duration: 0.8 }}
+                    className="bg-primary h-full"
+                  />
+                  <motion.div
+                    animate={{ width: `${live.possession[1]}%` }}
+                    transition={{ duration: 0.8 }}
+                    className="bg-foreground/50 h-full"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <div className="border border-border/60 rounded-sm p-2">
+                  <p className="uppercase text-muted-foreground text-[9px]">{t.liveShots}</p>
+                  <p className="tabular-nums text-lg font-bold">{live.shots[0]} <span className="text-muted-foreground text-xs">/</span> {live.shots[1]}</p>
+                </div>
+                <div className="border border-border/60 rounded-sm p-2">
+                  <p className="uppercase text-muted-foreground text-[9px]">{t.liveXg}</p>
+                  <p className="tabular-nums text-lg font-bold">{live.xg[0].toFixed(2)} <span className="text-muted-foreground text-xs">/</span> {live.xg[1].toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-4 pt-3 border-t border-border/60 text-[11px] italic text-muted-foreground">
+              {t.liveVerdict}
+            </p>
+            <p className="mt-2 font-mono text-[9px] uppercase tracking-widest text-primary/70 tabular-nums">
+              {t.updated} {t.secondsAgo(liveAgo)}
+            </p>
+          </motion.section>
+
           <section>
             <h2 className="font-mono text-[11px] uppercase tracking-widest border-b border-border pb-2 mb-6">
               {t.viewingTitle}
