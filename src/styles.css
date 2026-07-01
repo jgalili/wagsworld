@@ -129,6 +129,10 @@
   background-clip: text;
   color: transparent;
   animation: shine 6s linear infinite;
+  /* prevent italic glyphs (esp. Hebrew serif) from being clipped at edges */
+  display: inline-block;
+  padding-inline: 0.15em;
+  margin-inline: -0.15em;
 }
 
 @layer base {
