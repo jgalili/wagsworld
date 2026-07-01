@@ -874,8 +874,8 @@ function Index() {
 
         </motion.div>
 
-        {/* Full-width horizontal row: Optimal Viewing + Quick Bets stacked */}
-        <div className="md:col-span-12 space-y-16">
+        {/* Full-width horizontal row: Optimal Viewing */}
+        <div className="md:col-span-12">
           {/* Optimal Viewing */}
           <section>
             <h2 className="font-mono text-[11px] uppercase tracking-widest border-b border-border pb-2 mb-6">
@@ -914,119 +914,6 @@ function Index() {
               ))}
             </div>
           </section>
-
-          {/* Quick Bets */}
-          <motion.div {...fade(0.55)} className="space-y-5">
-            <div className="flex items-baseline justify-between border-b border-border pb-2">
-              <h3 className="font-mono text-[11px] uppercase tracking-widest">{t.compactIntel}</h3>
-              <span className="relative flex size-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                <span className="relative inline-flex rounded-full size-2 bg-primary" />
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              {/* Top markets */}
-              {(intel?.markets ?? []).slice(0, 2).map((m, i) => {
-                const q = isHe ? m.question_he : m.question;
-                const opt = isHe ? m.topOption_he : m.topOption;
-                return (
-                  <motion.div
-                    key={`compact-m-${q}-${i}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 + i * 0.06, duration: 0.4 }}
-                    className="p-4 rounded-sm border border-border bg-surface/60 backdrop-blur-md hover:border-primary/40 transition-colors flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex justify-between items-start gap-2 mb-2">
-                        <p className="text-sm font-bold leading-snug text-pretty">{q}</p>
-                        <span className="font-mono text-[9px] uppercase text-primary font-bold whitespace-nowrap">{m.pricePct}¢</span>
-                      </div>
-                      <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
-                        <span>{t.priceLabel} · {opt}</span>
-                        <span>${m.volumeUsd >= 1_000_000 ? `${(m.volumeUsd / 1_000_000).toFixed(2)}M` : `${Math.round(m.volumeUsd / 1000)}k`}</span>
-                      </div>
-                    </div>
-                    <div className="mt-3 h-1 bg-muted rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${m.pricePct}%` }}
-                        transition={{ duration: 0.8, delay: 0.2 + i * 0.06 }}
-                        className="h-full bg-gradient-to-r from-primary to-foreground"
-                      />
-                    </div>
-                  </motion.div>
-                );
-              })}
-
-              {/* Top winner */}
-              {(intel?.winners ?? []).slice(0, 1).map((w, i) => {
-                const wager = isHe ? w.wager_he : w.wager;
-                return (
-                  <motion.div
-                    key={`compact-w-${w.handle}-${i}`}
-                    initial={{ opacity: 0, x: isHe ? -10 : 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2, duration: 0.4 }}
-                    className="p-4 rounded-sm border border-border bg-gradient-to-br from-surface/70 to-surface/20 backdrop-blur-md flex flex-col justify-between"
-                  >
-                    <div>
-                      <p className="font-mono text-[9px] uppercase text-muted-foreground mb-1">{t.compactWinners}</p>
-                      <div className="flex justify-between items-baseline gap-2 mb-1">
-                        <span className="font-mono text-xs font-bold text-primary">{w.handle}</span>
-                        <span className="font-display italic text-2xl tabular-nums">+${w.amountUsd >= 1_000_000 ? `${(w.amountUsd / 1_000_000).toFixed(2)}M` : `${Math.round(w.amountUsd / 1000)}k`}</span>
-                      </div>
-                      <p className="text-xs leading-snug text-muted-foreground">{wager}</p>
-                    </div>
-                  </motion.div>
-                );
-              })}
-
-              {/* Juicy drops */}
-              {(intel?.drops ?? []).slice(0, 2).map((d, i) => {
-                const headline = isHe ? d.headline_he : d.headline;
-                return (
-                  <motion.article
-                    key={`compact-d-${headline}-${i}`}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.25 + i * 0.06, duration: 0.4 }}
-                    className="p-4 rounded-sm border border-border bg-surface/50 backdrop-blur-md hover:bg-surface/80 transition-colors flex flex-col justify-between"
-                  >
-                    <div>
-                      <span className="font-mono text-[9px] uppercase tracking-widest text-primary font-bold">{d.tag}</span>
-                      <p className="mt-1 text-sm leading-snug font-medium text-pretty">{headline}</p>
-                    </div>
-                    <div className="mt-2 pt-1 border-t border-border/60 flex justify-between items-center font-mono text-[9px] uppercase text-muted-foreground">
-                      <span className="italic truncate">{d.source}</span>
-                      <span>{t.minutesAgoLabel(d.minutesAgo)}</span>
-                    </div>
-                  </motion.article>
-                );
-              })}
-              {(!intel || intelQuery.isLoading) && (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-32 rounded-sm border border-border bg-surface/40 animate-pulse" />
-                ))
-              )}
-            </div>
-
-            {/* Footer + refresh */}
-            <div className="flex items-center justify-between pt-2 border-t border-border">
-              <div className="text-[10px] text-muted-foreground">
-                <p>{intel?.polymarketOnline ? t.polymarketOn : t.polymarketOff}</p>
-                <p>{intel ? `${t.lastFetchedLabel} · ${t.secondsAgo(intelAgo)}` : t.dropsSub}</p>
-              </div>
-              <button
-                onClick={() => intelQuery.refetch()}
-                disabled={intelQuery.isFetching}
-                className="font-mono text-[9px] uppercase tracking-widest border border-primary/50 hover:bg-primary hover:text-primary-foreground rounded-full px-3 py-1.5 transition-all disabled:opacity-50 disabled:cursor-wait shrink-0"
-              >
-                {intelQuery.isFetching ? t.fetchingLabel : `↻ ${t.refreshLabel}`}
-              </button>
-            </div>
-          </motion.div>
         </div>
       </main>
 
@@ -1086,12 +973,15 @@ function Index() {
                 const opt = isHe ? m.topOption_he : m.topOption;
                 const take = isHe ? m.take_he : m.take;
                 return (
-                  <motion.div
+                  <motion.a
+                    href={m.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     key={`${q}-${i}`}
                     initial={{ opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.06, duration: 0.5 }}
-                    className="group relative p-5 rounded-sm border border-border bg-surface/60 backdrop-blur-md hover:border-primary/50 transition-colors overflow-hidden"
+                    className="group relative block p-5 rounded-sm border border-border bg-surface/60 backdrop-blur-md hover:border-primary/50 transition-colors overflow-hidden min-w-0"
                   >
                     <div className="absolute inset-x-0 bottom-0 h-1 bg-muted overflow-hidden">
                       <motion.div
@@ -1101,9 +991,10 @@ function Index() {
                         className="h-full bg-gradient-to-r from-primary via-primary to-foreground"
                       />
                     </div>
-                    <p className="text-sm font-bold leading-snug text-pretty min-h-[2.5rem]">{q}</p>
-                    <div className="mt-4 flex items-end justify-between gap-3">
-                      <div>
+                    <p className="text-sm font-bold leading-snug text-pretty break-words hyphens-auto min-h-[2.5rem] pr-6 rtl:pr-0 rtl:pl-6">{q}</p>
+                    <span className="absolute top-3 right-3 rtl:right-auto rtl:left-3 text-[10px] opacity-60 group-hover:opacity-100 transition-opacity">↗</span>
+                    <div className="mt-4 flex items-end justify-between gap-3 min-w-0">
+                      <div className="min-w-0">
                         <p className="font-mono text-[9px] uppercase text-muted-foreground">
                           {t.priceLabel} · {opt}
                         </p>
@@ -1122,10 +1013,10 @@ function Index() {
                         </p>
                       </div>
                     </div>
-                    <p className="mt-4 pt-3 border-t border-border/60 text-[11px] italic text-muted-foreground leading-relaxed">
+                    <p className="mt-4 pt-3 border-t border-border/60 text-[11px] italic text-muted-foreground leading-relaxed break-words">
                       &mdash; {take}
                     </p>
-                  </motion.div>
+                  </motion.a>
                 );
               })}
               {!intel && intelQuery.isLoading && (
@@ -1149,31 +1040,34 @@ function Index() {
                 const wager = isHe ? w.wager_he : w.wager;
                 const vibe = isHe ? w.vibe_he : w.vibe;
                 return (
-                  <motion.div
+                  <motion.a
+                    href={w.profileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     key={`${w.handle}-${i}`}
                     initial={{ opacity: 0, x: isHe ? -12 : 12 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1 + i * 0.08, duration: 0.55 }}
-                    className="relative p-4 rounded-sm border border-border hover:border-primary/50 bg-gradient-to-br from-surface/70 to-surface/20 backdrop-blur-md group transition-colors"
+                    className="relative block p-4 rounded-sm border border-border hover:border-primary/50 bg-gradient-to-br from-surface/70 to-surface/20 backdrop-blur-md group transition-colors min-w-0"
                   >
-                    <div className="flex items-baseline justify-between gap-3 mb-2">
-                      <span className="font-mono text-xs font-bold text-primary group-hover:text-foreground transition-colors">
+                    <div className="flex items-baseline justify-between gap-3 mb-2 min-w-0 pr-6 rtl:pr-0 rtl:pl-6">
+                      <span className="font-mono text-xs font-bold text-primary group-hover:text-foreground transition-colors truncate">
                         {w.handle}
                       </span>
-                      <span className="font-display italic text-2xl tabular-nums text-foreground">
+                      <span className="font-display italic text-2xl tabular-nums text-foreground whitespace-nowrap">
                         +${w.amountUsd >= 1_000_000
                           ? `${(w.amountUsd / 1_000_000).toFixed(2)}M`
                           : `${Math.round(w.amountUsd / 1000)}k`}
                       </span>
                     </div>
-                    <p className="text-xs leading-snug">{wager}</p>
-                    <p className="mt-2 text-[10px] italic text-muted-foreground border-t border-border/50 pt-2">
+                    <p className="text-xs leading-snug break-words">{wager}</p>
+                    <p className="mt-2 text-[10px] italic text-muted-foreground border-t border-border/50 pt-2 break-words">
                       &mdash; {vibe}
                     </p>
-                    <span className="absolute top-3 right-3 rtl:right-auto rtl:left-3 font-mono text-[9px] tabular-nums text-muted-foreground">
-                      #{pad(i + 1)}
+                    <span className="absolute top-3 right-3 rtl:right-auto rtl:left-3 font-mono text-[9px] tabular-nums text-muted-foreground opacity-60 group-hover:opacity-100">
+                      #{pad(i + 1)} ↗
                     </span>
-                  </motion.div>
+                  </motion.a>
                 );
               })}
               {!intel && intelQuery.isLoading && (
@@ -1197,24 +1091,27 @@ function Index() {
             {(intel?.drops ?? []).map((d, i) => {
               const headline = isHe ? d.headline_he : d.headline;
               return (
-                <motion.article
+                <motion.a
+                  href={d.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   key={`${headline}-${i}`}
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 + i * 0.07, duration: 0.5 }}
-                  className="group relative p-4 rounded-sm border border-border bg-surface/50 backdrop-blur-md hover:bg-surface/80 hover:-translate-y-1 transition-all"
+                  className="group relative block p-4 rounded-sm border border-border bg-surface/50 backdrop-blur-md hover:bg-surface/80 hover:-translate-y-1 transition-all min-w-0"
                 >
                   <span className="font-mono text-[9px] uppercase tracking-widest text-primary font-bold">
                     {d.tag}
                   </span>
-                  <p className="mt-2 text-sm leading-snug font-medium text-pretty min-h-[4.5rem]">
+                  <p className="mt-2 text-sm leading-snug font-medium text-pretty break-words min-h-[4.5rem]">
                     {headline}
                   </p>
-                  <div className="mt-3 pt-2 border-t border-border/60 flex justify-between items-center font-mono text-[9px] uppercase text-muted-foreground tabular-nums">
-                    <span className="italic truncate">{d.source}</span>
-                    <span>{t.minutesAgoLabel(d.minutesAgo)}</span>
+                  <div className="mt-3 pt-2 border-t border-border/60 flex justify-between items-center gap-2 font-mono text-[9px] uppercase text-muted-foreground tabular-nums min-w-0">
+                    <span className="italic truncate group-hover:text-primary transition-colors">{d.source} ↗</span>
+                    <span className="whitespace-nowrap">{t.minutesAgoLabel(d.minutesAgo)}</span>
                   </div>
-                </motion.article>
+                </motion.a>
               );
             })}
             {!intel && intelQuery.isLoading && (
