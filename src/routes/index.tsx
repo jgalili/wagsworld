@@ -493,76 +493,106 @@ function Index() {
 
         {/* CENTER: Hot Player Index */}
         <motion.div {...fade(0.35)} className="md:col-span-5">
-          <h2 className="font-display text-3xl italic mb-8 border-b-2 border-foreground/60 pb-4 shine-text">
-            {t.hotTitle}
-          </h2>
+          <div className="flex items-end justify-between gap-4 mb-6 border-b-2 border-foreground/60 pb-4">
+            <h2 className="font-display text-3xl italic shine-text">{t.hotTitle}</h2>
+            <div className="flex gap-1 font-mono text-[10px] uppercase tracking-widest">
+              {(["week", "last"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setPlayerFilter(f)}
+                  className={`px-3 py-1.5 rounded-full border transition-all ${
+                    playerFilter === f
+                      ? "bg-primary text-primary-foreground border-primary shadow-[0_0_20px_-5px_var(--primary)]"
+                      : "border-border text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {f === "week" ? t.filterThisWeek : t.filterLastWeek}
+                </button>
+              ))}
+            </div>
+          </div>
 
-          <div className="space-y-8">
+          {current && (
             <motion.div
+              key={`${playerFilter}-${safeIdx}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
               ref={tiltRef}
               onMouseMove={onTilt}
               onMouseLeave={onTiltLeave}
               style={{ rotateX: rx, rotateY: ry, transformPerspective: 1000 }}
               className="group relative"
             >
-              <div className="w-full aspect-[4/5] bg-muted rounded-sm overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700 ring-1 ring-primary/20 shadow-[0_30px_80px_-30px_color-mix(in_oklab,var(--primary)_50%,transparent)]">
+              <div className="w-full aspect-[4/5] bg-muted rounded-sm overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700 ring-1 ring-primary/20 shadow-[0_30px_80px_-30px_color-mix(in_oklab,var(--primary)_50%,transparent)] relative">
                 <img
-                  src={player1}
-                  alt={`#1 ${t.players[0].name}`}
-                  width={896}
-                  height={1120}
+                  src={current._img}
+                  alt={current.name}
                   className="w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
                 />
+                <span className="absolute top-3 left-3 rtl:left-auto rtl:right-3 font-mono text-[10px] uppercase tracking-widest bg-background/70 backdrop-blur-sm px-2 py-1 rounded-full ring-1 ring-border">
+                  {t.daysAgoLabel(current.daysAgo)} · {current.match}
+                </span>
               </div>
               <div className="mt-4 flex justify-between items-start gap-4">
                 <div>
                   <p className="font-mono text-[11px] uppercase text-primary font-bold">
-                    #01 // {t.players[0].country}
+                    #{pad(current._rank)} // {current.country}
                   </p>
-                  <h3 className="text-2xl font-display italic">{t.players[0].name}</h3>
+                  <h3 className="text-2xl font-display italic">{current.name}</h3>
                   <p className="text-sm mt-2 max-w-[36ch] text-pretty text-muted-foreground">
-                    {t.players[0].blurb}
+                    {current.blurb}
                   </p>
                 </div>
-                <div className="text-right shrink-0">
-                  <p className="font-mono text-[10px] uppercase text-muted-foreground">
-                    {t.hotness}
-                  </p>
-                  <p className="text-4xl font-extrabold tracking-tighter italic shine-text">{t.players[0].score}</p>
+                <div className="text-right rtl:text-left shrink-0">
+                  <p className="font-mono text-[10px] uppercase text-muted-foreground">{t.hotness}</p>
+                  <p className="text-4xl font-extrabold tracking-tighter italic shine-text">{current.score}</p>
                 </div>
               </div>
             </motion.div>
+          )}
 
-            {[player2, player3, player4].map((img, idx) => {
-              const p = t.players[idx + 1];
-              return (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-80px" }}
-                  whileHover={{ y: -4 }}
-                  transition={{ duration: 0.6, delay: idx * 0.08 }}
-                  className="grid grid-cols-5 gap-4 pt-8 border-t border-border"
-                >
-                  <div className="col-span-2">
-                    <div className="aspect-square bg-muted rounded-sm overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 ring-1 ring-border">
-                      <img src={img} alt={p.name} loading="lazy" className="w-full h-full object-cover hover:scale-110 transition-transform duration-[1200ms]" />
-                    </div>
-                  </div>
-                  <div className="col-span-3 space-y-2">
-                    <p className="font-mono text-[10px] uppercase text-primary font-bold">
-                      #0{idx + 2} // {p.country}
-                    </p>
-                    <h3 className="text-xl font-display italic">{p.name}</h3>
-                    <p className="text-xs text-muted-foreground leading-snug">{p.blurb}</p>
-                    <p className="font-mono text-[10px] uppercase text-muted-foreground pt-1">
-                      {t.hotness} <span className="text-foreground font-extrabold not-italic mx-1">{p.score}</span>
-                    </p>
-                  </div>
-                </motion.div>
-              );
-            })}
+          {/* Carousel controls */}
+          <div className="mt-6 flex items-center justify-between gap-4">
+            <button
+              onClick={goPrev}
+              className="font-mono text-[11px] uppercase tracking-widest border border-border hover:border-primary hover:text-primary rounded-full px-4 py-2 transition-colors"
+            >
+              ← {t.prevLabel}
+            </button>
+            <div dir="ltr" className="flex gap-1.5">
+              {filteredPlayers.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setPlayerIdx(i)}
+                  aria-label={`Go to ${i + 1}`}
+                  className={`h-1.5 rounded-full transition-all ${
+                    i === safeIdx ? "w-8 bg-primary" : "w-1.5 bg-border hover:bg-muted-foreground"
+                  }`}
+                />
+              ))}
+            </div>
+            <button
+              onClick={goNext}
+              className="font-mono text-[11px] uppercase tracking-widest border border-border hover:border-primary hover:text-primary rounded-full px-4 py-2 transition-colors"
+            >
+              {t.nextLabel} →
+            </button>
+          </div>
+
+          {/* Thumbnail rail */}
+          <div className="mt-6 grid grid-cols-4 gap-2">
+            {filteredPlayers.map((p, i) => (
+              <button
+                key={i}
+                onClick={() => setPlayerIdx(i)}
+                className={`aspect-square rounded-sm overflow-hidden ring-1 transition-all ${
+                  i === safeIdx ? "ring-primary ring-2 scale-105" : "ring-border grayscale opacity-60 hover:opacity-100 hover:grayscale-0"
+                }`}
+              >
+                <img src={p._img} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
+              </button>
+            ))}
           </div>
         </motion.div>
 
