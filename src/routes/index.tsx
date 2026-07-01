@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
+import { useQuery } from "@tanstack/react-query";
+import { getMondialIntel } from "@/lib/mondial-intel.functions";
 import player1 from "@/assets/player-1.jpg";
 import player2 from "@/assets/player-2.jpg";
 import player3 from "@/assets/player-3.jpg";
@@ -161,6 +163,23 @@ const I18N = {
     footerLinks: ["The Exit Strategy", "Mute Keywords", "Peace Protocols"],
     dLabel: "D", hLabel: "H", mLabel: "M", sLabel: "S",
     lightMode: "Light", darkMode: "Dark", langLabel: "Language",
+    intelTitle: "Betting Intel & Juicy Feed",
+    intelSub: "Live from the money — and the tunnel cameras.",
+    marketsTitle: "Prediction Markets",
+    marketsSub: "What the money thinks. (Money is often wrong. Loudly.)",
+    winnersTitle: "Biggest Winners This Week",
+    winnersSub: "People who watched the group stage so you didn't have to.",
+    dropsTitle: "Juicy Micro-News",
+    dropsSub: "Refreshed on every page load. You're welcome.",
+    totalWagered: "Total wagered this week",
+    volumeLabel: "Volume",
+    priceLabel: "Yes",
+    minutesAgoLabel: (n: number) => n < 1 ? "just now" : n === 1 ? "1 min ago" : `${n} min ago`,
+    polymarketOn: "Polymarket · online",
+    polymarketOff: "Polymarket · unreachable — using fallback",
+    refreshLabel: "Refresh",
+    fetchingLabel: "Fetching fresh gossip…",
+    lastFetchedLabel: "Feed refreshed",
   },
   he: {
     title: "מדריך הנבדל(ת) האינטימי",
@@ -247,6 +266,23 @@ const I18N = {
     footerLinks: ["אסטרטגיית יציאה", "מילות השתקה", "פרוטוקולי שלום"],
     dLabel: "י", hLabel: "ש", mLabel: "ד", sLabel: "ש",
     lightMode: "בהיר", darkMode: "כהה", langLabel: "שפה",
+    intelTitle: "מודיעין הימורים ופיד עסיסי",
+    intelSub: "ישר מהכסף — ומהמצלמות במנהרה.",
+    marketsTitle: "שוקי חיזוי",
+    marketsSub: "מה שהכסף חושב. (הכסף לרוב טועה. בקול.)",
+    winnersTitle: "המנצחים הגדולים השבוע",
+    winnersSub: "אנשים שצפו בשלב הבתים במקומך.",
+    dropsTitle: "מיקרו-חדשות עסיסיות",
+    dropsSub: "מתרעננות בכל טעינת עמוד. על לא דבר.",
+    totalWagered: "סך ההימורים השבוע",
+    volumeLabel: "מחזור",
+    priceLabel: "כן",
+    minutesAgoLabel: (n: number) => n < 1 ? "ממש עכשיו" : n === 1 ? "לפני דקה" : `לפני ${n} דק'`,
+    polymarketOn: "פולימרקט · מחובר",
+    polymarketOff: "פולימרקט · לא זמין — משתמשים בגיבוי",
+    refreshLabel: "רענון",
+    fetchingLabel: "מושכים רכילות טרייה…",
+    lastFetchedLabel: "הפיד עודכן",
   },
 } as const;
 
@@ -290,6 +326,18 @@ function Index() {
   // Live match simulation
   const live = useLiveMatch();
   const liveAgo = useAgo(live.lastUpdated);
+
+  // Live betting intel + juicy news — refreshed on every mount
+  const intelQuery = useQuery({
+    queryKey: ["mondial-intel"],
+    queryFn: () => getMondialIntel(),
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
+  });
+  const intel = intelQuery.data;
+  const intelAgo = useAgo(intel?.fetchedAt ?? Date.now());
 
   // Hot Player carousel
   const playerImages = [player1, player2, player3, player4];
@@ -856,6 +904,202 @@ function Index() {
           </div>
         </motion.div>
       </main>
+
+      {/* ================ LIVE BETTING INTEL + JUICY NEWS ================ */}
+      <motion.section
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 max-w-7xl mx-auto mt-24"
+      >
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b-2 border-foreground/60 pb-6 mb-10">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-primary font-bold mb-2 inline-flex items-center gap-2">
+              <span className="relative flex size-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex rounded-full size-2 bg-primary" />
+              </span>
+              {intel?.polymarketOnline ? t.polymarketOn : t.polymarketOff}
+            </p>
+            <h2 className={`text-4xl md:text-5xl tracking-tight shine-text leading-tight ${isHe ? "font-hebrew italic font-semibold" : "font-display italic"}`}>
+              {t.intelTitle}
+            </h2>
+            <p className="text-sm text-muted-foreground italic mt-1">{t.intelSub}</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right rtl:text-left">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                {t.totalWagered}
+              </p>
+              <p className="font-display italic text-2xl tabular-nums text-primary">
+                {intel ? `$${(intel.totalWageredUsd / 1_000_000).toFixed(2)}M` : "—"}
+              </p>
+            </div>
+            <button
+              onClick={() => intelQuery.refetch()}
+              disabled={intelQuery.isFetching}
+              className="font-mono text-[10px] uppercase tracking-widest border border-primary/50 hover:bg-primary hover:text-primary-foreground rounded-full px-4 py-2 transition-all disabled:opacity-50 disabled:cursor-wait"
+            >
+              {intelQuery.isFetching ? t.fetchingLabel : `↻ ${t.refreshLabel}`}
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          {/* Prediction Markets */}
+          <div className="lg:col-span-7 space-y-6">
+            <div className="flex items-baseline justify-between">
+              <h3 className="font-mono text-[11px] uppercase tracking-widest">
+                {t.marketsTitle}
+              </h3>
+              <p className="text-[10px] italic text-muted-foreground">{t.marketsSub}</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {(intel?.markets ?? []).map((m, i) => {
+                const q = isHe ? m.question_he : m.question;
+                const opt = isHe ? m.topOption_he : m.topOption;
+                const take = isHe ? m.take_he : m.take;
+                return (
+                  <motion.div
+                    key={`${q}-${i}`}
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.06, duration: 0.5 }}
+                    className="group relative p-5 rounded-sm border border-border bg-surface/60 backdrop-blur-md hover:border-primary/50 transition-colors overflow-hidden"
+                  >
+                    <div className="absolute inset-x-0 bottom-0 h-1 bg-muted overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${m.pricePct}%` }}
+                        transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                        className="h-full bg-gradient-to-r from-primary via-primary to-foreground"
+                      />
+                    </div>
+                    <p className="text-sm font-bold leading-snug text-pretty min-h-[2.5rem]">{q}</p>
+                    <div className="mt-4 flex items-end justify-between gap-3">
+                      <div>
+                        <p className="font-mono text-[9px] uppercase text-muted-foreground">
+                          {t.priceLabel} · {opt}
+                        </p>
+                        <p className="text-3xl font-extrabold tabular-nums italic shine-text leading-none mt-1">
+                          {m.pricePct}¢
+                        </p>
+                      </div>
+                      <div className="text-right rtl:text-left">
+                        <p className="font-mono text-[9px] uppercase text-muted-foreground">
+                          {t.volumeLabel}
+                        </p>
+                        <p className="font-mono text-xs tabular-nums">
+                          ${m.volumeUsd >= 1_000_000
+                            ? `${(m.volumeUsd / 1_000_000).toFixed(2)}M`
+                            : `${Math.round(m.volumeUsd / 1000)}k`}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="mt-4 pt-3 border-t border-border/60 text-[11px] italic text-muted-foreground leading-relaxed">
+                      &mdash; {take}
+                    </p>
+                  </motion.div>
+                );
+              })}
+              {!intel && intelQuery.isLoading && (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-44 rounded-sm border border-border bg-surface/40 animate-pulse" />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Biggest Winners */}
+          <div className="lg:col-span-5 space-y-6">
+            <div className="flex items-baseline justify-between">
+              <h3 className="font-mono text-[11px] uppercase tracking-widest">
+                {t.winnersTitle}
+              </h3>
+              <p className="text-[10px] italic text-muted-foreground">{t.winnersSub}</p>
+            </div>
+            <div className="space-y-3">
+              {(intel?.winners ?? []).map((w, i) => {
+                const wager = isHe ? w.wager_he : w.wager;
+                const vibe = isHe ? w.vibe_he : w.vibe;
+                return (
+                  <motion.div
+                    key={`${w.handle}-${i}`}
+                    initial={{ opacity: 0, x: isHe ? -12 : 12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 + i * 0.08, duration: 0.55 }}
+                    className="relative p-4 rounded-sm border border-border hover:border-primary/50 bg-gradient-to-br from-surface/70 to-surface/20 backdrop-blur-md group transition-colors"
+                  >
+                    <div className="flex items-baseline justify-between gap-3 mb-2">
+                      <span className="font-mono text-xs font-bold text-primary group-hover:text-foreground transition-colors">
+                        {w.handle}
+                      </span>
+                      <span className="font-display italic text-2xl tabular-nums text-foreground">
+                        +${w.amountUsd >= 1_000_000
+                          ? `${(w.amountUsd / 1_000_000).toFixed(2)}M`
+                          : `${Math.round(w.amountUsd / 1000)}k`}
+                      </span>
+                    </div>
+                    <p className="text-xs leading-snug">{wager}</p>
+                    <p className="mt-2 text-[10px] italic text-muted-foreground border-t border-border/50 pt-2">
+                      &mdash; {vibe}
+                    </p>
+                    <span className="absolute top-3 right-3 rtl:right-auto rtl:left-3 font-mono text-[9px] tabular-nums text-muted-foreground">
+                      #{pad(i + 1)}
+                    </span>
+                  </motion.div>
+                );
+              })}
+              {!intel && intelQuery.isLoading && (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-28 rounded-sm border border-border bg-surface/40 animate-pulse" />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Juicy Drops */}
+        <div className="mt-14">
+          <div className="flex items-baseline justify-between border-b border-border pb-3 mb-6">
+            <h3 className="font-mono text-[11px] uppercase tracking-widest">{t.dropsTitle}</h3>
+            <p className="text-[10px] italic text-muted-foreground">
+              {intel ? `${t.lastFetchedLabel} · ${t.secondsAgo(intelAgo)}` : t.dropsSub}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {(intel?.drops ?? []).map((d, i) => {
+              const headline = isHe ? d.headline_he : d.headline;
+              return (
+                <motion.article
+                  key={`${headline}-${i}`}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + i * 0.07, duration: 0.5 }}
+                  className="group relative p-4 rounded-sm border border-border bg-surface/50 backdrop-blur-md hover:bg-surface/80 hover:-translate-y-1 transition-all"
+                >
+                  <span className="font-mono text-[9px] uppercase tracking-widest text-primary font-bold">
+                    {d.tag}
+                  </span>
+                  <p className="mt-2 text-sm leading-snug font-medium text-pretty min-h-[4.5rem]">
+                    {headline}
+                  </p>
+                  <div className="mt-3 pt-2 border-t border-border/60 flex justify-between items-center font-mono text-[9px] uppercase text-muted-foreground tabular-nums">
+                    <span className="italic truncate">{d.source}</span>
+                    <span>{t.minutesAgoLabel(d.minutesAgo)}</span>
+                  </div>
+                </motion.article>
+              );
+            })}
+            {!intel && intelQuery.isLoading && (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-36 rounded-sm border border-border bg-surface/40 animate-pulse" />
+              ))
+            )}
+          </div>
+        </div>
+      </motion.section>
 
       <footer className="relative z-10 max-w-7xl mx-auto mt-20 border-t border-foreground/60 py-8 flex flex-col md:flex-row justify-between items-center gap-4">
         <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
