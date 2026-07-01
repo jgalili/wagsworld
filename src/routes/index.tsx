@@ -980,6 +980,49 @@ function Index() {
           </div>
         </div>
 
+        {/* Juicy Drops */}
+        <div className="mt-14 mb-14">
+          <div className="flex items-baseline justify-between border-b border-border pb-3 mb-6">
+            <h3 className="font-mono text-[11px] uppercase tracking-widest">{t.dropsTitle}</h3>
+            <p className="text-[10px] italic text-muted-foreground">
+              {intel ? `${t.lastFetchedLabel} · ${t.secondsAgo(intelAgo)}` : t.dropsSub}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {(intel?.drops ?? []).map((d, i) => {
+              const headline = isHe ? d.headline_he : d.headline;
+              return (
+                <motion.a
+                  href={d.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  key={`${headline}-${i}`}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + i * 0.07, duration: 0.5 }}
+                  className="group relative block p-4 rounded-sm border border-border bg-surface/50 backdrop-blur-md hover:bg-surface/80 hover:-translate-y-1 transition-all min-w-0"
+                >
+                  <span className="font-mono text-[9px] uppercase tracking-widest text-primary font-bold">
+                    {d.tag}
+                  </span>
+                  <p className="mt-2 text-sm leading-snug font-medium text-pretty break-words min-h-[4.5rem]">
+                    {headline}
+                  </p>
+                  <div className="mt-3 pt-2 border-t border-border/60 flex justify-between items-center gap-2 font-mono text-[9px] uppercase text-muted-foreground tabular-nums min-w-0">
+                    <span className="italic truncate group-hover:text-primary transition-colors">{d.source} ↗</span>
+                    <span className="whitespace-nowrap">{t.minutesAgoLabel(d.minutesAgo)}</span>
+                  </div>
+                </motion.a>
+              );
+            })}
+            {!intel && intelQuery.isLoading && (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-36 rounded-sm border border-border bg-surface/40 animate-pulse" />
+              ))
+            )}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* Prediction Markets */}
           <div className="lg:col-span-7 space-y-6">
