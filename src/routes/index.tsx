@@ -180,6 +180,9 @@ const I18N = {
     refreshLabel: "Refresh",
     fetchingLabel: "Fetching fresh gossip…",
     lastFetchedLabel: "Feed refreshed",
+    compactIntel: "Quick Bets",
+    compactWinners: "Top winner",
+    compactDrops: "Juicy drops",
   },
   he: {
     title: "מדריך הנבדל(ת) האינטימי",
