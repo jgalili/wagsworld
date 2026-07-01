@@ -874,8 +874,8 @@ function Index() {
 
         </motion.div>
 
-        {/* Full-width horizontal row: Optimal Viewing + Quick Bets stacked */}
-        <div className="md:col-span-12 space-y-16">
+        {/* Full-width horizontal row: Optimal Viewing */}
+        <div className="md:col-span-12">
           {/* Optimal Viewing */}
           <section>
             <h2 className="font-mono text-[11px] uppercase tracking-widest border-b border-border pb-2 mb-6">
@@ -914,119 +914,6 @@ function Index() {
               ))}
             </div>
           </section>
-
-          {/* Quick Bets */}
-          <motion.div {...fade(0.55)} className="space-y-5">
-            <div className="flex items-baseline justify-between border-b border-border pb-2">
-              <h3 className="font-mono text-[11px] uppercase tracking-widest">{t.compactIntel}</h3>
-              <span className="relative flex size-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                <span className="relative inline-flex rounded-full size-2 bg-primary" />
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              {/* Top markets */}
-              {(intel?.markets ?? []).slice(0, 2).map((m, i) => {
-                const q = isHe ? m.question_he : m.question;
-                const opt = isHe ? m.topOption_he : m.topOption;
-                return (
-                  <motion.div
-                    key={`compact-m-${q}-${i}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 + i * 0.06, duration: 0.4 }}
-                    className="p-4 rounded-sm border border-border bg-surface/60 backdrop-blur-md hover:border-primary/40 transition-colors flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex justify-between items-start gap-2 mb-2">
-                        <p className="text-sm font-bold leading-snug text-pretty">{q}</p>
-                        <span className="font-mono text-[9px] uppercase text-primary font-bold whitespace-nowrap">{m.pricePct}¢</span>
-                      </div>
-                      <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
-                        <span>{t.priceLabel} · {opt}</span>
-                        <span>${m.volumeUsd >= 1_000_000 ? `${(m.volumeUsd / 1_000_000).toFixed(2)}M` : `${Math.round(m.volumeUsd / 1000)}k`}</span>
-                      </div>
-                    </div>
-                    <div className="mt-3 h-1 bg-muted rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${m.pricePct}%` }}
-                        transition={{ duration: 0.8, delay: 0.2 + i * 0.06 }}
-                        className="h-full bg-gradient-to-r from-primary to-foreground"
-                      />
-                    </div>
-                  </motion.div>
-                );
-              })}
-
-              {/* Top winner */}
-              {(intel?.winners ?? []).slice(0, 1).map((w, i) => {
-                const wager = isHe ? w.wager_he : w.wager;
-                return (
-                  <motion.div
-                    key={`compact-w-${w.handle}-${i}`}
-                    initial={{ opacity: 0, x: isHe ? -10 : 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2, duration: 0.4 }}
-                    className="p-4 rounded-sm border border-border bg-gradient-to-br from-surface/70 to-surface/20 backdrop-blur-md flex flex-col justify-between"
-                  >
-                    <div>
-                      <p className="font-mono text-[9px] uppercase text-muted-foreground mb-1">{t.compactWinners}</p>
-                      <div className="flex justify-between items-baseline gap-2 mb-1">
-                        <span className="font-mono text-xs font-bold text-primary">{w.handle}</span>
-                        <span className="font-display italic text-2xl tabular-nums">+${w.amountUsd >= 1_000_000 ? `${(w.amountUsd / 1_000_000).toFixed(2)}M` : `${Math.round(w.amountUsd / 1000)}k`}</span>
-                      </div>
-                      <p className="text-xs leading-snug text-muted-foreground">{wager}</p>
-                    </div>
-                  </motion.div>
-                );
-              })}
-
-              {/* Juicy drops */}
-              {(intel?.drops ?? []).slice(0, 2).map((d, i) => {
-                const headline = isHe ? d.headline_he : d.headline;
-                return (
-                  <motion.article
-                    key={`compact-d-${headline}-${i}`}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.25 + i * 0.06, duration: 0.4 }}
-                    className="p-4 rounded-sm border border-border bg-surface/50 backdrop-blur-md hover:bg-surface/80 transition-colors flex flex-col justify-between"
-                  >
-                    <div>
-                      <span className="font-mono text-[9px] uppercase tracking-widest text-primary font-bold">{d.tag}</span>
-                      <p className="mt-1 text-sm leading-snug font-medium text-pretty">{headline}</p>
-                    </div>
-                    <div className="mt-2 pt-1 border-t border-border/60 flex justify-between items-center font-mono text-[9px] uppercase text-muted-foreground">
-                      <span className="italic truncate">{d.source}</span>
-                      <span>{t.minutesAgoLabel(d.minutesAgo)}</span>
-                    </div>
-                  </motion.article>
-                );
-              })}
-              {(!intel || intelQuery.isLoading) && (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-32 rounded-sm border border-border bg-surface/40 animate-pulse" />
-                ))
-              )}
-            </div>
-
-            {/* Footer + refresh */}
-            <div className="flex items-center justify-between pt-2 border-t border-border">
-              <div className="text-[10px] text-muted-foreground">
-                <p>{intel?.polymarketOnline ? t.polymarketOn : t.polymarketOff}</p>
-                <p>{intel ? `${t.lastFetchedLabel} · ${t.secondsAgo(intelAgo)}` : t.dropsSub}</p>
-              </div>
-              <button
-                onClick={() => intelQuery.refetch()}
-                disabled={intelQuery.isFetching}
-                className="font-mono text-[9px] uppercase tracking-widest border border-primary/50 hover:bg-primary hover:text-primary-foreground rounded-full px-3 py-1.5 transition-all disabled:opacity-50 disabled:cursor-wait shrink-0"
-              >
-                {intelQuery.isFetching ? t.fetchingLabel : `↻ ${t.refreshLabel}`}
-              </button>
-            </div>
-          </motion.div>
         </div>
       </main>
 
