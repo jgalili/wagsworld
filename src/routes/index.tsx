@@ -327,6 +327,18 @@ function Index() {
   const live = useLiveMatch();
   const liveAgo = useAgo(live.lastUpdated);
 
+  // Live betting intel + juicy news — refreshed on every mount
+  const intelQuery = useQuery({
+    queryKey: ["mondial-intel"],
+    queryFn: () => getMondialIntel(),
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
+  });
+  const intel = intelQuery.data;
+  const intelAgo = useAgo(intel?.fetchedAt ?? Date.now());
+
   // Hot Player carousel
   const playerImages = [player1, player2, player3, player4];
   const [playerFilter, setPlayerFilter] = useState<"week" | "last">("week");
