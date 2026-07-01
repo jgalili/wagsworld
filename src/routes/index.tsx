@@ -163,7 +163,7 @@ const I18N = {
     lightMode: "Light", darkMode: "Dark", langLabel: "Language",
   },
   he: {
-    title: "מדריך הנבדל",
+    title: "מדריך הנבדל(ת) האינטימי",
     edition: "גיליון 04 // כרך 3: השרידות היא המטרה",
     countdown: "ספירה לאחור לחופש הרגשי",
     microTitle: "מודיעין מיקרו — חובה לדעת",
