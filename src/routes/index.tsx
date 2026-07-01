@@ -848,18 +848,47 @@ function Index() {
             </div>
           </motion.section>
 
+
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            className="p-6 border-2 border-primary rounded-sm bg-primary/5 shadow-[0_0_40px_-10px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
+          >
+            <p className="font-mono text-[10px] uppercase text-primary font-bold mb-2">
+              {t.proTip}
+            </p>
+            <p className="text-sm leading-snug font-medium italic">
+              {t.proTipText}
+            </p>
+          </motion.div>
+
+          <div className="p-6 border border-border rounded-sm bg-surface/40 backdrop-blur-sm">
+            <p className="font-mono text-[10px] uppercase text-muted-foreground font-bold mb-2">
+              {t.fakeKit}
+            </p>
+            <ul className="text-xs space-y-2 text-muted-foreground">
+              {t.fake.map((f, i) => (
+                <li key={i} className="hover:text-primary transition-colors cursor-default">&mdash; {f}</li>
+              ))}
+            </ul>
+          </div>
+
+        </motion.div>
+
+        {/* Full-width horizontal row: Optimal Viewing + Quick Bets stacked */}
+        <div className="md:col-span-12 space-y-16">
+          {/* Optimal Viewing */}
           <section>
             <h2 className="font-mono text-[11px] uppercase tracking-widest border-b border-border pb-2 mb-6">
               {t.viewingTitle}
             </h2>
-            <div className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {t.fixtures.map((f, i) => (
                 <motion.div
                   key={f.match}
-                  initial={{ opacity: 0, x: isHe ? -20 : 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: 0.5 + i * 0.1, duration: 0.6 }}
+                  transition={{ delay: 0.1 + i * 0.1, duration: 0.6 }}
                   className="space-y-3"
                 >
                   <div className="flex justify-between items-center">
@@ -886,30 +915,7 @@ function Index() {
             </div>
           </section>
 
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            className="p-6 border-2 border-primary rounded-sm bg-primary/5 shadow-[0_0_40px_-10px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
-          >
-            <p className="font-mono text-[10px] uppercase text-primary font-bold mb-2">
-              {t.proTip}
-            </p>
-            <p className="text-sm leading-snug font-medium italic">
-              {t.proTipText}
-            </p>
-          </motion.div>
-
-          <div className="p-6 border border-border rounded-sm bg-surface/40 backdrop-blur-sm">
-            <p className="font-mono text-[10px] uppercase text-muted-foreground font-bold mb-2">
-              {t.fakeKit}
-            </p>
-            <ul className="text-xs space-y-2 text-muted-foreground">
-              {t.fake.map((f, i) => (
-                <li key={i} className="hover:text-primary transition-colors cursor-default">&mdash; {f}</li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Compact betting intel — fills the right-hand dead space */}
+          {/* Quick Bets */}
           <motion.div {...fade(0.55)} className="space-y-5">
             <div className="flex items-baseline justify-between border-b border-border pb-2">
               <h3 className="font-mono text-[11px] uppercase tracking-widest">{t.compactIntel}</h3>
@@ -919,8 +925,8 @@ function Index() {
               </span>
             </div>
 
-            {/* Top markets */}
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              {/* Top markets */}
               {(intel?.markets ?? []).slice(0, 2).map((m, i) => {
                 const q = isHe ? m.question_he : m.question;
                 const opt = isHe ? m.topOption_he : m.topOption;
@@ -930,17 +936,19 @@ function Index() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 + i * 0.06, duration: 0.4 }}
-                    className="p-3 rounded-sm border border-border bg-surface/60 backdrop-blur-md hover:border-primary/40 transition-colors"
+                    className="p-4 rounded-sm border border-border bg-surface/60 backdrop-blur-md hover:border-primary/40 transition-colors flex flex-col justify-between"
                   >
-                    <div className="flex justify-between items-start gap-2 mb-2">
-                      <p className="text-xs font-bold leading-snug text-pretty">{q}</p>
-                      <span className="font-mono text-[9px] uppercase text-primary font-bold whitespace-nowrap">{m.pricePct}¢</span>
+                    <div>
+                      <div className="flex justify-between items-start gap-2 mb-2">
+                        <p className="text-sm font-bold leading-snug text-pretty">{q}</p>
+                        <span className="font-mono text-[9px] uppercase text-primary font-bold whitespace-nowrap">{m.pricePct}¢</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
+                        <span>{t.priceLabel} · {opt}</span>
+                        <span>${m.volumeUsd >= 1_000_000 ? `${(m.volumeUsd / 1_000_000).toFixed(2)}M` : `${Math.round(m.volumeUsd / 1000)}k`}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
-                      <span>{t.priceLabel} · {opt}</span>
-                      <span>${m.volumeUsd >= 1_000_000 ? `${(m.volumeUsd / 1_000_000).toFixed(2)}M` : `${Math.round(m.volumeUsd / 1000)}k`}</span>
-                    </div>
-                    <div className="mt-2 h-1 bg-muted rounded-full overflow-hidden">
+                    <div className="mt-3 h-1 bg-muted rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${m.pricePct}%` }}
@@ -951,14 +959,8 @@ function Index() {
                   </motion.div>
                 );
               })}
-              {(!intel || intelQuery.isLoading) && (
-                <div className="h-24 rounded-sm border border-border bg-surface/40 animate-pulse" />
-              )}
-            </div>
 
-            {/* Top winner */}
-            <div>
-              <p className="font-mono text-[10px] uppercase text-muted-foreground font-bold mb-2">{t.compactWinners}</p>
+              {/* Top winner */}
               {(intel?.winners ?? []).slice(0, 1).map((w, i) => {
                 const wager = isHe ? w.wager_he : w.wager;
                 return (
@@ -967,42 +969,47 @@ function Index() {
                     initial={{ opacity: 0, x: isHe ? -10 : 10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2, duration: 0.4 }}
-                    className="p-3 rounded-sm border border-border bg-gradient-to-br from-surface/70 to-surface/20 backdrop-blur-md"
+                    className="p-4 rounded-sm border border-border bg-gradient-to-br from-surface/70 to-surface/20 backdrop-blur-md flex flex-col justify-between"
                   >
-                    <div className="flex justify-between items-baseline gap-2 mb-1">
-                      <span className="font-mono text-xs font-bold text-primary">{w.handle}</span>
-                      <span className="font-display italic text-xl tabular-nums">+${w.amountUsd >= 1_000_000 ? `${(w.amountUsd / 1_000_000).toFixed(2)}M` : `${Math.round(w.amountUsd / 1000)}k`}</span>
+                    <div>
+                      <p className="font-mono text-[9px] uppercase text-muted-foreground mb-1">{t.compactWinners}</p>
+                      <div className="flex justify-between items-baseline gap-2 mb-1">
+                        <span className="font-mono text-xs font-bold text-primary">{w.handle}</span>
+                        <span className="font-display italic text-2xl tabular-nums">+${w.amountUsd >= 1_000_000 ? `${(w.amountUsd / 1_000_000).toFixed(2)}M` : `${Math.round(w.amountUsd / 1000)}k`}</span>
+                      </div>
+                      <p className="text-xs leading-snug text-muted-foreground">{wager}</p>
                     </div>
-                    <p className="text-[11px] leading-snug text-muted-foreground">{wager}</p>
                   </motion.div>
                 );
               })}
-            </div>
 
-            {/* Juicy drops */}
-            <div>
-              <p className="font-mono text-[10px] uppercase text-muted-foreground font-bold mb-2">{t.compactDrops}</p>
-              <div className="space-y-2">
-                {(intel?.drops ?? []).slice(0, 2).map((d, i) => {
-                  const headline = isHe ? d.headline_he : d.headline;
-                  return (
-                    <motion.article
-                      key={`compact-d-${headline}-${i}`}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.25 + i * 0.06, duration: 0.4 }}
-                      className="p-3 rounded-sm border border-border bg-surface/50 backdrop-blur-md hover:bg-surface/80 transition-colors"
-                    >
+              {/* Juicy drops */}
+              {(intel?.drops ?? []).slice(0, 2).map((d, i) => {
+                const headline = isHe ? d.headline_he : d.headline;
+                return (
+                  <motion.article
+                    key={`compact-d-${headline}-${i}`}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.25 + i * 0.06, duration: 0.4 }}
+                    className="p-4 rounded-sm border border-border bg-surface/50 backdrop-blur-md hover:bg-surface/80 transition-colors flex flex-col justify-between"
+                  >
+                    <div>
                       <span className="font-mono text-[9px] uppercase tracking-widest text-primary font-bold">{d.tag}</span>
-                      <p className="mt-1 text-xs leading-snug font-medium text-pretty">{headline}</p>
-                      <div className="mt-2 pt-1 border-t border-border/60 flex justify-between items-center font-mono text-[9px] uppercase text-muted-foreground">
-                        <span className="italic truncate">{d.source}</span>
-                        <span>{t.minutesAgoLabel(d.minutesAgo)}</span>
-                      </div>
-                    </motion.article>
-                  );
-                })}
-              </div>
+                      <p className="mt-1 text-sm leading-snug font-medium text-pretty">{headline}</p>
+                    </div>
+                    <div className="mt-2 pt-1 border-t border-border/60 flex justify-between items-center font-mono text-[9px] uppercase text-muted-foreground">
+                      <span className="italic truncate">{d.source}</span>
+                      <span>{t.minutesAgoLabel(d.minutesAgo)}</span>
+                    </div>
+                  </motion.article>
+                );
+              })}
+              {(!intel || intelQuery.isLoading) && (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="h-32 rounded-sm border border-border bg-surface/40 animate-pulse" />
+                ))
+              )}
             </div>
 
             {/* Footer + refresh */}
@@ -1020,7 +1027,7 @@ function Index() {
               </button>
             </div>
           </motion.div>
-        </motion.div>
+        </div>
       </main>
 
       {/* ================ LIVE BETTING INTEL + JUICY NEWS ================ */}
