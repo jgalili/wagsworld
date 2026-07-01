@@ -28,6 +28,51 @@ function useCountdown(target: Date) {
   return { days, hours, minutes, seconds };
 }
 
+// Simulated live match feed — jitters every ~3s, minute ticks every ~20s.
+function useLiveMatch() {
+  const [state, setState] = useState(() => ({
+    minute: 54,
+    score: [1, 0] as [number, number],
+    possession: [58, 42] as [number, number],
+    shots: [4, 2] as [number, number],
+    xg: [1.24, 0.61] as [number, number],
+    lastUpdated: Date.now(),
+  }));
+  useEffect(() => {
+    const id = setInterval(() => {
+      setState((s) => {
+        const drift = () => Math.round((Math.random() - 0.5) * 6);
+        let a = Math.max(30, Math.min(70, s.possession[0] + drift()));
+        let sa = s.shots[0] + (Math.random() > 0.85 ? 1 : 0);
+        let sb = s.shots[1] + (Math.random() > 0.9 ? 1 : 0);
+        const xa = +(s.xg[0] + Math.random() * 0.08).toFixed(2);
+        const xb = +(s.xg[1] + Math.random() * 0.05).toFixed(2);
+        return {
+          ...s,
+          possession: [a, 100 - a],
+          shots: [sa, sb],
+          xg: [xa, xb],
+          lastUpdated: Date.now(),
+        };
+      });
+    }, 3200);
+    const tick = setInterval(() => {
+      setState((s) => ({ ...s, minute: Math.min(90, s.minute + 1), lastUpdated: Date.now() }));
+    }, 22000);
+    return () => { clearInterval(id); clearInterval(tick); };
+  }, []);
+  return state;
+}
+
+function useAgo(ts: number) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return Math.max(0, Math.floor((now - ts) / 1000));
+}
+
 type Lang = "en" | "he";
 
 const I18N = {
@@ -57,11 +102,28 @@ const I18N = {
     hotTitle: "The Hot Player Index",
     hotness: "Hotness",
     players: [
-      { country: "Spain", name: "Mateo Vidal", blurb: "The hair remains impeccable despite 90 minutes of sprinting. A miracle of modern engineering.", score: "9.8" },
-      { country: "Korea", name: "Cho Gue-sung", blurb: "Breaks the internet every time he subs on. Jawline could cut glass. Kickoff at 12:30 GMT — set an alarm.", score: "9.4" },
-      { country: "France", name: "Théo Laurent", blurb: "Emotionally available on Instagram. Cries after every match. Plays Thursday 19:30.", score: "9.1" },
-      { country: "Argentina", name: "Rodrigo de Paz", blurb: "Chaotic energy, elite bone structure. The scowl is a choice. A solid pick for the quarter-finals.", score: "8.7" },
+      { country: "Spain", name: "Mateo Vidal", blurb: "The hair remains impeccable despite 90 minutes of sprinting. A miracle of modern engineering.", score: "9.8", daysAgo: 1, match: "vs Germany" },
+      { country: "Korea", name: "Cho Gue-sung", blurb: "Breaks the internet every time he subs on. Jawline could cut glass. Kickoff at 12:30 GMT — set an alarm.", score: "9.4", daysAgo: 2, match: "vs Uruguay" },
+      { country: "France", name: "Théo Laurent", blurb: "Emotionally available on Instagram. Cries after every match. Currently on the pitch — check the Live tile.", score: "9.1", daysAgo: 0, match: "LIVE vs Argentina" },
+      { country: "Argentina", name: "Rodrigo de Paz", blurb: "Chaotic energy, elite bone structure. The scowl is a choice. A solid pick for the quarter-finals.", score: "8.7", daysAgo: 3, match: "vs Poland" },
+      { country: "Brazil", name: "Lucas Andrade", blurb: "Smiles like a shampoo ad. Scored twice last week and became a meme by Monday morning.", score: "9.6", daysAgo: 6, match: "vs Serbia" },
+      { country: "Portugal", name: "Diogo Vaz", blurb: "Renaissance-painting cheekbones. Last week's viral goal celebration is still on your group chat.", score: "9.3", daysAgo: 5, match: "vs Ghana" },
+      { country: "Netherlands", name: "Sven de Vries", blurb: "6'4\", ponytail, sad eyes. Benched last week — the internet has not recovered.", score: "8.9", daysAgo: 4, match: "vs USA" },
+      { country: "Croatia", name: "Marko Perišić", blurb: "The forearm veins alone deserve their own segment. Two assists vs Japan last week.", score: "8.6", daysAgo: 7, match: "vs Japan" },
     ],
+    filterThisWeek: "This Week",
+    filterLastWeek: "Last 7 Days",
+    prevLabel: "Prev", nextLabel: "Next",
+    daysAgoLabel: (n: number) => n === 0 ? "Today" : n === 1 ? "1 day ago" : `${n} days ago`,
+    liveTitle: "Live On The Pitch Right Now",
+    liveMinute: "min",
+    livePossession: "Possession",
+    liveShots: "Shots on target",
+    liveXg: "xG",
+    liveVerdict: "Verdict: still nothing has happened. Classic.",
+    liveBadge: "LIVE",
+    updated: "Updated",
+    secondsAgo: (n: number) => `${n}s ago`,
     viewingTitle: "Optimal Viewing",
     optimalWindow: "Optimal Window:",
     fixtures: [
@@ -107,11 +169,28 @@ const I18N = {
     hotTitle: "מדד השחקן החתיך",
     hotness: "חתיכות",
     players: [
-      { country: "ספרד", name: "מטאו וידאל", blurb: "השיער נשאר מושלם אחרי 90 דקות של ריצות. נס של הנדסה מודרנית.", score: "9.8" },
-      { country: "קוריאה", name: "צ'ו גיה-סונג", blurb: "שובר את האינטרנט בכל פעם שהוא נכנס. קו הלסת יכול לחתוך זכוכית. פתיחה ב-12:30 GMT — כווני שעון מעורר.", score: "9.4" },
-      { country: "צרפת", name: "תיאו לורן", blurb: "זמין רגשית באינסטגרם. בוכה אחרי כל משחק. משחק ביום חמישי 19:30.", score: "9.1" },
-      { country: "ארגנטינה", name: "רודריגו דה פאס", blurb: "אנרגיה כאוטית, מבנה עצמות עילית. הזעף הוא בחירה. בחירה מצוינת לרבע הגמר.", score: "8.7" },
+      { country: "ספרד", name: "מטאו וידאל", blurb: "השיער נשאר מושלם אחרי 90 דקות של ריצות. נס של הנדסה מודרנית.", score: "9.8", daysAgo: 1, match: "נגד גרמניה" },
+      { country: "קוריאה", name: "צ'ו גיה-סונג", blurb: "שובר את האינטרנט בכל פעם שהוא נכנס. קו הלסת יכול לחתוך זכוכית.", score: "9.4", daysAgo: 2, match: "נגד אורוגוואי" },
+      { country: "צרפת", name: "תיאו לורן", blurb: "זמין רגשית באינסטגרם. בוכה אחרי כל משחק. כרגע על הדשא — בדקי את החלונית 'שידור חי'.", score: "9.1", daysAgo: 0, match: "חי נגד ארגנטינה" },
+      { country: "ארגנטינה", name: "רודריגו דה פאס", blurb: "אנרגיה כאוטית, מבנה עצמות עילית. הזעף הוא בחירה.", score: "8.7", daysAgo: 3, match: "נגד פולין" },
+      { country: "ברזיל", name: "לוקאס אנדרדה", blurb: "מחייך כמו בפרסומת לשמפו. הבקיע פעמיים בשבוע שעבר והפך למם עד יום שני.", score: "9.6", daysAgo: 6, match: "נגד סרביה" },
+      { country: "פורטוגל", name: "דיוגו וז", blurb: "עצמות לחיים מציור רנסנס. חגיגת השער הוויראלית שלו עדיין בקבוצת הוואטסאפ שלך.", score: "9.3", daysAgo: 5, match: "נגד גאנה" },
+      { country: "הולנד", name: "סבן דה פריס", blurb: "1.94, קוקו, עיניים עצובות. הוחלף בשבוע שעבר — האינטרנט לא התאושש.", score: "8.9", daysAgo: 4, match: "נגד ארה\"ב" },
+      { country: "קרואטיה", name: "מרקו פרישיץ'", blurb: "הוורידים באמות מגיע להם קטע משלהם. שני בישולים נגד יפן בשבוע שעבר.", score: "8.6", daysAgo: 7, match: "נגד יפן" },
     ],
+    filterThisWeek: "השבוע",
+    filterLastWeek: "7 ימים אחרונים",
+    prevLabel: "הקודם", nextLabel: "הבא",
+    daysAgoLabel: (n: number) => n === 0 ? "היום" : n === 1 ? "לפני יום" : `לפני ${n} ימים`,
+    liveTitle: "כרגע על הדשא, בשידור חי",
+    liveMinute: "דק'",
+    livePossession: "החזקת כדור",
+    liveShots: "בעיטות למסגרת",
+    liveXg: "xG",
+    liveVerdict: "הכרעה: עדיין לא קרה כלום. קלאסי.",
+    liveBadge: "חי",
+    updated: "עודכן",
+    secondsAgo: (n: number) => `לפני ${n} שניות`,
     viewingTitle: "צפייה אופטימלית",
     optimalWindow: "חלון אופטימלי:",
     fixtures: [
@@ -170,6 +249,23 @@ function Index() {
   const t = I18N[lang];
   const isHe = lang === "he";
 
+  // Live match simulation
+  const live = useLiveMatch();
+  const liveAgo = useAgo(live.lastUpdated);
+
+  // Hot Player carousel
+  const playerImages = [player1, player2, player3, player4];
+  const [playerFilter, setPlayerFilter] = useState<"week" | "last">("week");
+  const [playerIdx, setPlayerIdx] = useState(0);
+  const filteredPlayers = t.players
+    .map((p, i) => ({ ...p, _img: playerImages[i % playerImages.length], _rank: i + 1 }))
+    .filter((p) => (playerFilter === "week" ? p.daysAgo <= 3 : p.daysAgo >= 4 && p.daysAgo <= 7));
+  const safeIdx = filteredPlayers.length ? playerIdx % filteredPlayers.length : 0;
+  const current = filteredPlayers[safeIdx];
+  const goPrev = () => setPlayerIdx((i) => (i - 1 + filteredPlayers.length) % filteredPlayers.length);
+  const goNext = () => setPlayerIdx((i) => (i + 1) % filteredPlayers.length);
+  useEffect(() => { setPlayerIdx(0); }, [playerFilter]);
+
   useEffect(() => {
     const root = document.documentElement;
     root.classList.toggle("dark", theme === "dark");
@@ -224,6 +320,16 @@ function Index() {
           <span className={`size-3 rounded-full ${theme === "light" ? "bg-foreground" : "bg-background border border-foreground"}`} />
           {theme === "light" ? t.lightMode : t.darkMode}
         </button>
+
+        <div className="inline-flex items-center gap-2 border border-primary/50 rounded-full px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest bg-primary/10 backdrop-blur-md">
+          <span className="relative flex size-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+            <span className="relative inline-flex rounded-full size-2 bg-primary" />
+          </span>
+          <span className="text-primary font-bold">{t.liveBadge}</span>
+          <span className="opacity-60">·</span>
+          <span className="tabular-nums">{t.updated} {t.secondsAgo(liveAgo)}</span>
+        </div>
 
         <button
           onClick={() => setLang(lang === "en" ? "he" : "en")}
@@ -387,81 +493,202 @@ function Index() {
 
         {/* CENTER: Hot Player Index */}
         <motion.div {...fade(0.35)} className="md:col-span-5">
-          <h2 className="font-display text-3xl italic mb-8 border-b-2 border-foreground/60 pb-4 shine-text">
-            {t.hotTitle}
-          </h2>
+          <div className="flex items-end justify-between gap-4 mb-6 border-b-2 border-foreground/60 pb-4">
+            <h2 className="font-display text-3xl italic shine-text">{t.hotTitle}</h2>
+            <div className="flex gap-1 font-mono text-[10px] uppercase tracking-widest">
+              {(["week", "last"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setPlayerFilter(f)}
+                  className={`px-3 py-1.5 rounded-full border transition-all ${
+                    playerFilter === f
+                      ? "bg-primary text-primary-foreground border-primary shadow-[0_0_20px_-5px_var(--primary)]"
+                      : "border-border text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {f === "week" ? t.filterThisWeek : t.filterLastWeek}
+                </button>
+              ))}
+            </div>
+          </div>
 
-          <div className="space-y-8">
+          {current && (
             <motion.div
+              key={`${playerFilter}-${safeIdx}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
               ref={tiltRef}
               onMouseMove={onTilt}
               onMouseLeave={onTiltLeave}
               style={{ rotateX: rx, rotateY: ry, transformPerspective: 1000 }}
               className="group relative"
             >
-              <div className="w-full aspect-[4/5] bg-muted rounded-sm overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700 ring-1 ring-primary/20 shadow-[0_30px_80px_-30px_color-mix(in_oklab,var(--primary)_50%,transparent)]">
+              <div className="w-full aspect-[4/5] bg-muted rounded-sm overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700 ring-1 ring-primary/20 shadow-[0_30px_80px_-30px_color-mix(in_oklab,var(--primary)_50%,transparent)] relative">
                 <img
-                  src={player1}
-                  alt={`#1 ${t.players[0].name}`}
-                  width={896}
-                  height={1120}
+                  src={current._img}
+                  alt={current.name}
                   className="w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
                 />
+                <span className="absolute top-3 left-3 rtl:left-auto rtl:right-3 font-mono text-[10px] uppercase tracking-widest bg-background/70 backdrop-blur-sm px-2 py-1 rounded-full ring-1 ring-border">
+                  {t.daysAgoLabel(current.daysAgo)} · {current.match}
+                </span>
               </div>
               <div className="mt-4 flex justify-between items-start gap-4">
                 <div>
                   <p className="font-mono text-[11px] uppercase text-primary font-bold">
-                    #01 // {t.players[0].country}
+                    #{pad(current._rank)} // {current.country}
                   </p>
-                  <h3 className="text-2xl font-display italic">{t.players[0].name}</h3>
+                  <h3 className="text-2xl font-display italic">{current.name}</h3>
                   <p className="text-sm mt-2 max-w-[36ch] text-pretty text-muted-foreground">
-                    {t.players[0].blurb}
+                    {current.blurb}
                   </p>
                 </div>
-                <div className="text-right shrink-0">
-                  <p className="font-mono text-[10px] uppercase text-muted-foreground">
-                    {t.hotness}
-                  </p>
-                  <p className="text-4xl font-extrabold tracking-tighter italic shine-text">{t.players[0].score}</p>
+                <div className="text-right rtl:text-left shrink-0">
+                  <p className="font-mono text-[10px] uppercase text-muted-foreground">{t.hotness}</p>
+                  <p className="text-4xl font-extrabold tracking-tighter italic shine-text">{current.score}</p>
                 </div>
               </div>
             </motion.div>
+          )}
 
-            {[player2, player3, player4].map((img, idx) => {
-              const p = t.players[idx + 1];
-              return (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-80px" }}
-                  whileHover={{ y: -4 }}
-                  transition={{ duration: 0.6, delay: idx * 0.08 }}
-                  className="grid grid-cols-5 gap-4 pt-8 border-t border-border"
-                >
-                  <div className="col-span-2">
-                    <div className="aspect-square bg-muted rounded-sm overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 ring-1 ring-border">
-                      <img src={img} alt={p.name} loading="lazy" className="w-full h-full object-cover hover:scale-110 transition-transform duration-[1200ms]" />
-                    </div>
-                  </div>
-                  <div className="col-span-3 space-y-2">
-                    <p className="font-mono text-[10px] uppercase text-primary font-bold">
-                      #0{idx + 2} // {p.country}
-                    </p>
-                    <h3 className="text-xl font-display italic">{p.name}</h3>
-                    <p className="text-xs text-muted-foreground leading-snug">{p.blurb}</p>
-                    <p className="font-mono text-[10px] uppercase text-muted-foreground pt-1">
-                      {t.hotness} <span className="text-foreground font-extrabold not-italic mx-1">{p.score}</span>
-                    </p>
-                  </div>
-                </motion.div>
-              );
-            })}
+          {/* Carousel controls */}
+          <div className="mt-6 flex items-center justify-between gap-4">
+            <button
+              onClick={goPrev}
+              className="font-mono text-[11px] uppercase tracking-widest border border-border hover:border-primary hover:text-primary rounded-full px-4 py-2 transition-colors"
+            >
+              ← {t.prevLabel}
+            </button>
+            <div dir="ltr" className="flex gap-1.5">
+              {filteredPlayers.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setPlayerIdx(i)}
+                  aria-label={`Go to ${i + 1}`}
+                  className={`h-1.5 rounded-full transition-all ${
+                    i === safeIdx ? "w-8 bg-primary" : "w-1.5 bg-border hover:bg-muted-foreground"
+                  }`}
+                />
+              ))}
+            </div>
+            <button
+              onClick={goNext}
+              className="font-mono text-[11px] uppercase tracking-widest border border-border hover:border-primary hover:text-primary rounded-full px-4 py-2 transition-colors"
+            >
+              {t.nextLabel} →
+            </button>
+          </div>
+
+          {/* Thumbnail rail */}
+          <div className="mt-6 grid grid-cols-4 gap-2">
+            {filteredPlayers.map((p, i) => (
+              <button
+                key={i}
+                onClick={() => setPlayerIdx(i)}
+                className={`aspect-square rounded-sm overflow-hidden ring-1 transition-all ${
+                  i === safeIdx ? "ring-primary ring-2 scale-105" : "ring-border grayscale opacity-60 hover:opacity-100 hover:grayscale-0"
+                }`}
+              >
+                <img src={p._img} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
+              </button>
+            ))}
           </div>
         </motion.div>
 
         {/* RIGHT: fixtures + tip */}
         <motion.div {...fade(0.45)} className="md:col-span-3 space-y-12">
+          {/* Live match */}
+          <motion.section
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6 }}
+            className="relative overflow-hidden rounded-sm border border-primary/40 bg-gradient-to-br from-primary/10 via-background/40 to-background/40 backdrop-blur-md p-5 shadow-[0_0_50px_-15px_var(--primary)]"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="inline-flex items-center gap-2">
+                <span className="relative flex size-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                  <span className="relative inline-flex rounded-full size-2.5 bg-primary" />
+                </span>
+                <span className="font-mono text-[10px] uppercase tracking-widest text-primary font-bold">
+                  {t.liveBadge} · {t.liveTitle}
+                </span>
+              </div>
+              <span className="font-mono text-[10px] tabular-nums text-primary">
+                {live.minute}' {t.liveMinute}
+              </span>
+            </div>
+
+            <div dir="ltr" className="flex items-center justify-between gap-2 mb-5">
+              <div className="text-center flex-1">
+                <p className="font-mono text-[10px] uppercase text-muted-foreground">FRA</p>
+                <motion.p
+                  key={live.score[0]}
+                  initial={{ scale: 1.4, color: "var(--primary)" }}
+                  animate={{ scale: 1, color: "var(--foreground)" }}
+                  transition={{ duration: 0.4 }}
+                  className="text-4xl font-extrabold tabular-nums"
+                >
+                  {live.score[0]}
+                </motion.p>
+              </div>
+              <span className="font-display text-2xl italic text-muted-foreground">—</span>
+              <div className="text-center flex-1">
+                <p className="font-mono text-[10px] uppercase text-muted-foreground">ARG</p>
+                <motion.p
+                  key={live.score[1]}
+                  initial={{ scale: 1.4, color: "var(--primary)" }}
+                  animate={{ scale: 1, color: "var(--foreground)" }}
+                  transition={{ duration: 0.4 }}
+                  className="text-4xl font-extrabold tabular-nums"
+                >
+                  {live.score[1]}
+                </motion.p>
+              </div>
+            </div>
+
+            {/* Possession bar */}
+            <div className="space-y-3 text-[11px] font-mono">
+              <div>
+                <div className="flex justify-between mb-1 tabular-nums">
+                  <span>{live.possession[0]}%</span>
+                  <span className="uppercase text-muted-foreground">{t.livePossession}</span>
+                  <span>{live.possession[1]}%</span>
+                </div>
+                <div dir="ltr" className="flex h-1.5 rounded-full overflow-hidden bg-muted">
+                  <motion.div
+                    animate={{ width: `${live.possession[0]}%` }}
+                    transition={{ duration: 0.8 }}
+                    className="bg-primary h-full"
+                  />
+                  <motion.div
+                    animate={{ width: `${live.possession[1]}%` }}
+                    transition={{ duration: 0.8 }}
+                    className="bg-foreground/50 h-full"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <div className="border border-border/60 rounded-sm p-2">
+                  <p className="uppercase text-muted-foreground text-[9px]">{t.liveShots}</p>
+                  <p className="tabular-nums text-lg font-bold">{live.shots[0]} <span className="text-muted-foreground text-xs">/</span> {live.shots[1]}</p>
+                </div>
+                <div className="border border-border/60 rounded-sm p-2">
+                  <p className="uppercase text-muted-foreground text-[9px]">{t.liveXg}</p>
+                  <p className="tabular-nums text-lg font-bold">{live.xg[0].toFixed(2)} <span className="text-muted-foreground text-xs">/</span> {live.xg[1].toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-4 pt-3 border-t border-border/60 text-[11px] italic text-muted-foreground">
+              {t.liveVerdict}
+            </p>
+            <p className="mt-2 font-mono text-[9px] uppercase tracking-widest text-primary/70 tabular-nums">
+              {t.updated} {t.secondsAgo(liveAgo)}
+            </p>
+          </motion.section>
+
           <section>
             <h2 className="font-mono text-[11px] uppercase tracking-widest border-b border-border pb-2 mb-6">
               {t.viewingTitle}
