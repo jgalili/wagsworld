@@ -9,6 +9,7 @@ export type BettingMarket = {
   volumeUsd: number;
   take: string;
   take_he: string;
+  url: string;
 };
 
 export type BiggestWinner = {
@@ -18,12 +19,14 @@ export type BiggestWinner = {
   wager_he: string;
   vibe: string;
   vibe_he: string;
+  profileUrl: string;
 };
 
 export type JuicyDrop = {
   headline: string;
   headline_he: string;
   source: string;
+  sourceUrl: string;
   minutesAgo: number;
   tag: "SCANDAL" | "INJURY" | "DRAMA" | "MONEY" | "OFF-PITCH";
 };
