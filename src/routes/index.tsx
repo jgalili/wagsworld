@@ -848,43 +848,6 @@ function Index() {
             </div>
           </motion.section>
 
-          <section>
-            <h2 className="font-mono text-[11px] uppercase tracking-widest border-b border-border pb-2 mb-6">
-              {t.viewingTitle}
-            </h2>
-            <div className="space-y-8">
-              {t.fixtures.map((f, i) => (
-                <motion.div
-                  key={f.match}
-                  initial={{ opacity: 0, x: isHe ? -20 : 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.5 + i * 0.1, duration: 0.6 }}
-                  className="space-y-3"
-                >
-                  <div className="flex justify-between items-center">
-                    <span className="font-mono text-[10px] uppercase bg-foreground text-background px-1.5 py-0.5">
-                      {f.time}
-                    </span>
-                    <span className="text-[10px] text-primary font-bold uppercase">
-                      {f.when}
-                    </span>
-                  </div>
-                  <p className="font-bold text-lg leading-tight uppercase tracking-tighter">
-                    {f.match}
-                  </p>
-                  <div className="p-3 bg-muted/60 backdrop-blur-sm rounded-sm border border-border/60">
-                    <p className="text-[10px] font-bold uppercase mb-1 text-primary">
-                      {t.optimalWindow}
-                    </p>
-                    <p className="text-xs leading-relaxed italic text-muted-foreground">
-                      {f.window}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </section>
 
           <motion.div
             whileHover={{ scale: 1.02 }}
