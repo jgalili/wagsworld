@@ -249,6 +249,23 @@ function Index() {
   const t = I18N[lang];
   const isHe = lang === "he";
 
+  // Live match simulation
+  const live = useLiveMatch();
+  const liveAgo = useAgo(live.lastUpdated);
+
+  // Hot Player carousel
+  const playerImages = [player1, player2, player3, player4];
+  const [playerFilter, setPlayerFilter] = useState<"week" | "last">("week");
+  const [playerIdx, setPlayerIdx] = useState(0);
+  const filteredPlayers = t.players
+    .map((p, i) => ({ ...p, _img: playerImages[i % playerImages.length], _rank: i + 1 }))
+    .filter((p) => (playerFilter === "week" ? p.daysAgo <= 3 : p.daysAgo >= 4 && p.daysAgo <= 7));
+  const safeIdx = filteredPlayers.length ? playerIdx % filteredPlayers.length : 0;
+  const current = filteredPlayers[safeIdx];
+  const goPrev = () => setPlayerIdx((i) => (i - 1 + filteredPlayers.length) % filteredPlayers.length);
+  const goNext = () => setPlayerIdx((i) => (i + 1) % filteredPlayers.length);
+  useEffect(() => { setPlayerIdx(0); }, [playerFilter]);
+
   useEffect(() => {
     const root = document.documentElement;
     root.classList.toggle("dark", theme === "dark");
