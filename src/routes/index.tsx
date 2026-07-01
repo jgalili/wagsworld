@@ -853,28 +853,6 @@ function Index() {
           </motion.section>
 
 
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            className="p-6 border-2 border-primary rounded-sm bg-primary/5 shadow-[0_0_40px_-10px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
-          >
-            <p className="font-mono text-[10px] uppercase text-primary font-bold mb-2">
-              {t.proTip}
-            </p>
-            <p className="text-sm leading-snug font-medium italic">
-              {t.proTipText}
-            </p>
-          </motion.div>
-
-          <div className="p-6 border border-border rounded-sm bg-surface/40 backdrop-blur-sm">
-            <p className="font-mono text-[10px] uppercase text-muted-foreground font-bold mb-2">
-              {t.fakeKit}
-            </p>
-            <ul className="text-xs space-y-2 text-muted-foreground">
-              {t.fake.map((f, i) => (
-                <li key={i} className="hover:text-primary transition-colors cursor-default">&mdash; {f}</li>
-              ))}
-            </ul>
-          </div>
 
         </motion.div>
 
