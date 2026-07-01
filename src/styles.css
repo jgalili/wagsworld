@@ -31,7 +31,6 @@
 }
 
 :root {
-:root {
   --background: oklch(0.96 0.015 85);
   --foreground: oklch(0.18 0 0);
   --muted: oklch(0.18 0 0 / 0.06);
