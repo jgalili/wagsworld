@@ -31,6 +31,7 @@
 }
 
 :root {
+:root {
   --background: oklch(0.96 0.015 85);
   --foreground: oklch(0.18 0 0);
   --muted: oklch(0.18 0 0 / 0.06);
@@ -44,16 +45,16 @@
 }
 
 .dark {
-  --background: oklch(0.14 0.005 85);
-  --foreground: oklch(0.96 0.015 85);
-  --muted: oklch(0.96 0.015 85 / 0.08);
-  --muted-foreground: oklch(0.96 0.015 85 / 0.6);
-  --primary: oklch(0.68 0.2 27);
-  --primary-foreground: oklch(0.14 0.005 85);
-  --border: oklch(0.96 0.015 85 / 0.14);
-  --surface: oklch(0.19 0.005 85);
-  --success: oklch(0.7 0.16 155);
-  --danger: oklch(0.68 0.2 27);
+  --background: oklch(0.13 0.012 20);
+  --foreground: oklch(0.97 0.02 85);
+  --muted: oklch(0.97 0.02 85 / 0.08);
+  --muted-foreground: oklch(0.97 0.02 85 / 0.62);
+  --primary: oklch(0.72 0.22 25);
+  --primary-foreground: oklch(0.13 0.012 20);
+  --border: oklch(0.97 0.02 85 / 0.14);
+  --surface: oklch(0.17 0.014 22);
+  --success: oklch(0.75 0.17 155);
+  --danger: oklch(0.72 0.22 25);
 }
 
 @keyframes slideUp {
@@ -64,6 +65,70 @@
 @keyframes pulseRed {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.35; }
+}
+
+@keyframes aurora {
+  0%   { transform: translate3d(-10%, -10%, 0) rotate(0deg); }
+  50%  { transform: translate3d(10%, 5%, 0) rotate(180deg); }
+  100% { transform: translate3d(-10%, -10%, 0) rotate(360deg); }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes shine {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@utility aurora-bg {
+  position: fixed;
+  inset: -30%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(40% 40% at 20% 30%, color-mix(in oklab, var(--primary) 55%, transparent), transparent 70%),
+    radial-gradient(35% 35% at 80% 20%, color-mix(in oklab, oklch(0.6 0.2 300) 40%, transparent), transparent 70%),
+    radial-gradient(45% 45% at 60% 80%, color-mix(in oklab, oklch(0.65 0.18 200) 40%, transparent), transparent 70%);
+  filter: blur(80px) saturate(140%);
+  opacity: 0.55;
+  animation: aurora 28s ease-in-out infinite;
+}
+
+@utility grain {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.08;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.9'/></svg>");
+}
+
+@utility spotlight {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(600px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in oklab, var(--primary) 12%, transparent), transparent 60%);
+  transition: background 120ms linear;
+}
+
+@utility shine-text {
+  background: linear-gradient(90deg,
+    var(--foreground) 0%,
+    var(--foreground) 40%,
+    color-mix(in oklab, var(--primary) 80%, var(--foreground)) 50%,
+    var(--foreground) 60%,
+    var(--foreground) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shine 6s linear infinite;
 }
 
 @layer base {

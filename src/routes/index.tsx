@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import player1 from "@/assets/player-1.jpg";
 import player2 from "@/assets/player-2.jpg";
 import player3 from "@/assets/player-3.jpg";
@@ -164,7 +165,7 @@ function FlagGB({ className = "" }: { className?: string }) {
 function Index() {
   const { days, hours, minutes, seconds } = useCountdown(FINAL_DATE);
   const pad = (n: number) => n.toString().padStart(2, "0");
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
   const [lang, setLang] = useState<Lang>("en");
   const t = I18N[lang];
   const isHe = lang === "he";
@@ -176,12 +177,48 @@ function Index() {
     root.setAttribute("dir", isHe ? "rtl" : "ltr");
   }, [theme, lang, isHe]);
 
+  // Cursor spotlight
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      const root = document.documentElement;
+      root.style.setProperty("--mx", `${e.clientX}px`);
+      root.style.setProperty("--my", `${e.clientY}px`);
+    };
+    window.addEventListener("pointermove", onMove);
+    return () => window.removeEventListener("pointermove", onMove);
+  }, []);
+
+  // Magnetic tilt for hero player
+  const tiltRef = useRef<HTMLDivElement>(null);
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const rx = useSpring(useTransform(my, [-0.5, 0.5], [8, -8]), { stiffness: 120, damping: 15 });
+  const ry = useSpring(useTransform(mx, [-0.5, 0.5], [-10, 10]), { stiffness: 120, damping: 15 });
+  const onTilt = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = tiltRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    mx.set((e.clientX - r.left) / r.width - 0.5);
+    my.set((e.clientY - r.top) / r.height - 0.5);
+  };
+  const onTiltLeave = () => { mx.set(0); my.set(0); };
+
+  const fade = (delay = 0) => ({
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] as const },
+  });
+
   return (
-    <div dir={isHe ? "rtl" : "ltr"} className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto flex justify-between items-center gap-4 pb-4 mb-4 flex-wrap">
+    <div dir={isHe ? "rtl" : "ltr"} className="relative min-h-screen bg-background text-foreground font-sans selection:bg-primary/30 p-4 md:p-8 overflow-hidden">
+      <div className="aurora-bg" aria-hidden="true" />
+      <div className="grain" aria-hidden="true" />
+      <div className="spotlight" aria-hidden="true" />
+
+      <div className="relative z-10 max-w-7xl mx-auto flex justify-between items-center gap-4 pb-4 mb-4 flex-wrap">
         <button
           onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-          className="inline-flex items-center gap-2 border border-border rounded-full px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest hover:bg-muted transition-colors"
+          className="inline-flex items-center gap-2 border border-border rounded-full px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest hover:bg-muted transition-colors backdrop-blur-md bg-background/40"
           aria-label="Toggle theme"
         >
           <span className={`size-3 rounded-full ${theme === "light" ? "bg-foreground" : "bg-background border border-foreground"}`} />
@@ -190,7 +227,7 @@ function Index() {
 
         <button
           onClick={() => setLang(lang === "en" ? "he" : "en")}
-          className="inline-flex items-center gap-2 border border-border rounded-full p-1 pr-3 text-[11px] font-mono uppercase tracking-widest hover:bg-muted transition-colors"
+          className="inline-flex items-center gap-2 border border-border rounded-full p-1 pr-3 text-[11px] font-mono uppercase tracking-widest hover:bg-muted transition-colors backdrop-blur-md bg-background/40"
           aria-label="Toggle language"
         >
           <span className="w-8 h-5 overflow-hidden rounded-sm ring-1 ring-border">
@@ -204,15 +241,31 @@ function Index() {
         </button>
       </div>
 
-      <header className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-baseline gap-6 border-b-2 border-foreground pb-8 mb-12 animate-[slideUp_0.6s_var(--ease-out-expo)_both]">
+      {/* Ticker */}
+      <div dir="ltr" className="relative z-10 max-w-7xl mx-auto mb-8 border-y border-border py-2 overflow-hidden backdrop-blur-sm bg-background/30">
+        <div className="flex gap-12 whitespace-nowrap animate-[marquee_45s_linear_infinite] font-mono text-[11px] uppercase tracking-widest">
+          {[...t.micro, ...t.micro].map((n, i) => (
+            <span key={i} className="inline-flex items-center gap-3">
+              <span className="size-1.5 rounded-full bg-primary animate-[pulseRed_1.5s_infinite]" />
+              {n}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <motion.header {...fade(0)} className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-baseline gap-6 border-b-2 border-foreground/60 pb-8 mb-12">
         <div className="space-y-1">
-          <h1 className="text-5xl md:text-7xl font-display italic tracking-tight">{t.title}</h1>
+          <h1 className="text-5xl md:text-7xl font-display italic tracking-tight shine-text">{t.title}</h1>
           <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
             {t.edition}
           </p>
         </div>
 
-        <div className="bg-foreground text-background p-6 rounded-sm min-w-[320px]">
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          transition={{ type: "spring", stiffness: 260, damping: 18 }}
+          className="relative bg-foreground text-background p-6 rounded-sm min-w-[320px] shadow-[0_20px_60px_-20px_color-mix(in_oklab,var(--primary)_45%,transparent)] ring-1 ring-primary/30"
+        >
           <p className="font-mono text-[10px] uppercase tracking-tighter mb-2 opacity-60">
             {t.countdown}
           </p>
@@ -229,37 +282,48 @@ function Index() {
               {pad(minutes)}
               <span className="text-[10px] ml-1 font-mono uppercase opacity-50">{t.mLabel}</span>
             </div>
-            <div className="text-3xl font-extrabold tabular-nums opacity-60">
+            <motion.div
+              key={seconds}
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 0.85, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="text-3xl font-extrabold tabular-nums"
+            >
               {pad(seconds)}
               <span className="text-[10px] ml-1 font-mono uppercase opacity-50">{t.sLabel}</span>
-            </div>
+            </motion.div>
             <div className="animate-[pulseRed_1.5s_infinite] size-2 bg-primary rounded-full mb-3 ml-auto" />
           </div>
-        </div>
-      </header>
+        </motion.div>
+      </motion.header>
 
-      <main className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12">
+      <main className="relative z-10 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12">
         {/* LEFT: intel + odds + peace */}
         <div className="md:col-span-4 space-y-12">
-          <section className="animate-[slideUp_0.6s_var(--ease-out-expo)_60ms_both]">
+          <motion.section {...fade(0.1)}>
             <h2 className="font-mono text-[11px] uppercase tracking-widest border-b border-border pb-2 mb-4">
               {t.microTitle}
             </h2>
             <div className="space-y-4">
               {t.micro.map((n, i) => (
-                <div key={i}>
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: isHe ? 12 : -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.15 + i * 0.08, duration: 0.5 }}
+                >
                   <p className="text-sm leading-relaxed">
                     <span className="text-primary font-bold mx-2 tabular-nums">
                       {pad(i + 1)}
                     </span>
                     {n}
                   </p>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </section>
+          </motion.section>
 
-          <section className="animate-[slideUp_0.6s_var(--ease-out-expo)_120ms_both]">
+          <motion.section {...fade(0.2)}>
             <h2 className="font-mono text-[11px] uppercase tracking-widest border-b border-border pb-2 mb-6">
               {t.oddsTitle}
             </h2>
@@ -270,38 +334,44 @@ function Index() {
                 { team: "Argentina", pct: 18 },
                 { team: "England", pct: 14 },
                 { team: "Spain", pct: 11 },
-              ].map((o) => (
-                <div key={o.team} className="flex items-center gap-4">
+              ].map((o, i) => (
+                <div key={o.team} className="flex items-center gap-4 group">
                   <span className="w-12 font-mono text-xs text-muted-foreground tabular-nums">
                     {o.pct}%
                   </span>
                   <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-foreground"
-                      style={{ width: `${o.pct * 3}%`, maxWidth: "100%" }}
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min(o.pct * 3, 100)}%` }}
+                      transition={{ delay: 0.4 + i * 0.1, duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+                      className="h-full bg-gradient-to-r from-foreground via-primary to-primary"
                     />
                   </div>
-                  <span className="text-sm font-semibold uppercase tracking-tight w-20 text-right rtl:text-left">
+                  <span className="text-sm font-semibold uppercase tracking-tight w-20 text-right rtl:text-left group-hover:text-primary transition-colors">
                     {t.teams[o.team] ?? o.team}
                   </span>
                 </div>
               ))}
             </div>
-          </section>
+          </motion.section>
 
-          <section className="bg-surface border border-border p-6 rounded-sm animate-[slideUp_0.6s_var(--ease-out-expo)_180ms_both]">
+          <motion.section {...fade(0.3)} className="bg-surface/70 backdrop-blur-md border border-border p-6 rounded-sm">
             <h2 className="font-mono text-[11px] uppercase tracking-widest mb-6">
               {t.peaceTitle}
             </h2>
             <div className="space-y-4">
               {t.peace.map((p) => (
-                <div key={p.slot} className="flex justify-between items-center gap-4">
+                <motion.div
+                  key={p.slot}
+                  whileHover={{ x: isHe ? -4 : 4 }}
+                  className="flex justify-between items-center gap-4"
+                >
                   <div className="space-y-1">
                     <p className="text-sm font-bold">{p.slot}</p>
                     <p className="text-[11px] text-muted-foreground uppercase">{p.note}</p>
                   </div>
                   {p.level === "critical" ? (
-                    <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold uppercase rounded-full ring-1 ring-primary/30 whitespace-nowrap">
+                    <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold uppercase rounded-full ring-1 ring-primary/30 whitespace-nowrap animate-[pulseRed_2s_infinite]">
                       {t.critical}
                     </span>
                   ) : (
@@ -309,27 +379,33 @@ function Index() {
                       {t.safe}
                     </span>
                   )}
-                </div>
+                </motion.div>
               ))}
             </div>
-          </section>
+          </motion.section>
         </div>
 
         {/* CENTER: Hot Player Index */}
-        <div className="md:col-span-5 animate-[slideUp_0.6s_var(--ease-out-expo)_240ms_both]">
-          <h2 className="font-display text-3xl italic mb-8 border-b-2 border-foreground pb-4">
+        <motion.div {...fade(0.35)} className="md:col-span-5">
+          <h2 className="font-display text-3xl italic mb-8 border-b-2 border-foreground/60 pb-4 shine-text">
             {t.hotTitle}
           </h2>
 
           <div className="space-y-8">
-            <div className="group relative">
-              <div className="w-full aspect-[4/5] bg-muted rounded-sm overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700">
+            <motion.div
+              ref={tiltRef}
+              onMouseMove={onTilt}
+              onMouseLeave={onTiltLeave}
+              style={{ rotateX: rx, rotateY: ry, transformPerspective: 1000 }}
+              className="group relative"
+            >
+              <div className="w-full aspect-[4/5] bg-muted rounded-sm overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700 ring-1 ring-primary/20 shadow-[0_30px_80px_-30px_color-mix(in_oklab,var(--primary)_50%,transparent)]">
                 <img
                   src={player1}
                   alt={`#1 ${t.players[0].name}`}
                   width={896}
                   height={1120}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
                 />
               </div>
               <div className="mt-4 flex justify-between items-start gap-4">
@@ -346,18 +422,26 @@ function Index() {
                   <p className="font-mono text-[10px] uppercase text-muted-foreground">
                     {t.hotness}
                   </p>
-                  <p className="text-3xl font-extrabold tracking-tighter italic">{t.players[0].score}</p>
+                  <p className="text-4xl font-extrabold tracking-tighter italic shine-text">{t.players[0].score}</p>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {[player2, player3, player4].map((img, idx) => {
               const p = t.players[idx + 1];
               return (
-                <div key={idx} className="grid grid-cols-5 gap-4 pt-8 border-t border-border">
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-80px" }}
+                  whileHover={{ y: -4 }}
+                  transition={{ duration: 0.6, delay: idx * 0.08 }}
+                  className="grid grid-cols-5 gap-4 pt-8 border-t border-border"
+                >
                   <div className="col-span-2">
-                    <div className="aspect-square bg-muted rounded-sm overflow-hidden grayscale hover:grayscale-0 transition-all duration-700">
-                      <img src={img} alt={p.name} loading="lazy" className="w-full h-full object-cover" />
+                    <div className="aspect-square bg-muted rounded-sm overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 ring-1 ring-border">
+                      <img src={img} alt={p.name} loading="lazy" className="w-full h-full object-cover hover:scale-110 transition-transform duration-[1200ms]" />
                     </div>
                   </div>
                   <div className="col-span-3 space-y-2">
@@ -370,21 +454,28 @@ function Index() {
                       {t.hotness} <span className="text-foreground font-extrabold not-italic mx-1">{p.score}</span>
                     </p>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>
-        </div>
+        </motion.div>
 
         {/* RIGHT: fixtures + tip */}
-        <div className="md:col-span-3 space-y-12 animate-[slideUp_0.6s_var(--ease-out-expo)_300ms_both]">
+        <motion.div {...fade(0.45)} className="md:col-span-3 space-y-12">
           <section>
             <h2 className="font-mono text-[11px] uppercase tracking-widest border-b border-border pb-2 mb-6">
               {t.viewingTitle}
             </h2>
             <div className="space-y-8">
-              {t.fixtures.map((f) => (
-                <div key={f.match} className="space-y-3">
+              {t.fixtures.map((f, i) => (
+                <motion.div
+                  key={f.match}
+                  initial={{ opacity: 0, x: isHe ? -20 : 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.5 + i * 0.1, duration: 0.6 }}
+                  className="space-y-3"
+                >
                   <div className="flex justify-between items-center">
                     <span className="font-mono text-[10px] uppercase bg-foreground text-background px-1.5 py-0.5">
                       {f.time}
@@ -396,7 +487,7 @@ function Index() {
                   <p className="font-bold text-lg leading-tight uppercase tracking-tighter">
                     {f.match}
                   </p>
-                  <div className="p-3 bg-muted rounded-sm">
+                  <div className="p-3 bg-muted/60 backdrop-blur-sm rounded-sm border border-border/60">
                     <p className="text-[10px] font-bold uppercase mb-1 text-primary">
                       {t.optimalWindow}
                     </p>
@@ -404,40 +495,43 @@ function Index() {
                       {f.window}
                     </p>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </section>
 
-          <div className="p-6 border-2 border-primary rounded-sm bg-primary/5">
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            className="p-6 border-2 border-primary rounded-sm bg-primary/5 shadow-[0_0_40px_-10px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
+          >
             <p className="font-mono text-[10px] uppercase text-primary font-bold mb-2">
               {t.proTip}
             </p>
             <p className="text-sm leading-snug font-medium italic">
               {t.proTipText}
             </p>
-          </div>
+          </motion.div>
 
-          <div className="p-6 border border-border rounded-sm">
+          <div className="p-6 border border-border rounded-sm bg-surface/40 backdrop-blur-sm">
             <p className="font-mono text-[10px] uppercase text-muted-foreground font-bold mb-2">
               {t.fakeKit}
             </p>
             <ul className="text-xs space-y-2 text-muted-foreground">
               {t.fake.map((f, i) => (
-                <li key={i}>&mdash; {f}</li>
+                <li key={i} className="hover:text-primary transition-colors cursor-default">&mdash; {f}</li>
               ))}
             </ul>
           </div>
-        </div>
+        </motion.div>
       </main>
 
-      <footer className="max-w-7xl mx-auto mt-20 border-t border-foreground py-8 flex flex-col md:flex-row justify-between items-center gap-4">
+      <footer className="relative z-10 max-w-7xl mx-auto mt-20 border-t border-foreground/60 py-8 flex flex-col md:flex-row justify-between items-center gap-4">
         <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
           {t.title} © {new Date().getFullYear()}
         </p>
         <div className="flex gap-8">
           {t.footerLinks.map((l, i) => (
-            <a key={i} href="#" className="font-mono text-[10px] uppercase hover:text-primary transition-colors">
+            <a key={i} href="#" className="font-mono text-[10px] uppercase hover:text-primary transition-colors story-link">
               {l}
             </a>
           ))}
