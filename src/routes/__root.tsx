@@ -80,9 +80,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "The Offside Guide — A World Cup Survival Dashboard" },
       { name: "description", content: "A cynical (but useful) dashboard for the wives, husbands and hostages of football fanatics. Countdown, odds, must-know intel, and the Hot Player Index." },
       { property: "og:title", content: "The Offside Guide — A World Cup Survival Dashboard" },
-      { property: "og:description", content: "Countdown to peace, the Hot Player Index, and everything you need to fake a football conversation." },
+      { property: "og:description", content: "A cynical (but useful) dashboard for the wives, husbands and hostages of football fanatics. Countdown, odds, must-know intel, and the Hot Player Index." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "The Offside Guide — A World Cup Survival Dashboard" },
+      { name: "twitter:description", content: "A cynical (but useful) dashboard for the wives, husbands and hostages of football fanatics. Countdown, odds, must-know intel, and the Hot Player Index." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/80d2cfa6-506a-43c3-81b4-9590dc6bb29e" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/80d2cfa6-506a-43c3-81b4-9590dc6bb29e" },
     ],
     links: [
       {
