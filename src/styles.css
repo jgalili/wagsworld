@@ -12,6 +12,7 @@
 
 @theme inline {
   --font-display: "Playfair Display", serif;
+  --font-hebrew: "Frank Ruhl Libre", "David Libre", serif;
   --font-sans: "Inter", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
