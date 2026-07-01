@@ -286,6 +286,9 @@ const I18N = {
     refreshLabel: "רענון",
     fetchingLabel: "מושכים רכילות טרייה…",
     lastFetchedLabel: "הפיד עודכן",
+    compactIntel: "הימורים מהירים",
+    compactWinners: "המנצח הגדול",
+    compactDrops: "חדשות עסיסיות",
   },
 } as const;
 
