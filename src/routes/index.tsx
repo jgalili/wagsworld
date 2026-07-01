@@ -399,7 +399,7 @@ function Index() {
 
       <motion.header {...fade(0)} className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-baseline gap-6 border-b-2 border-foreground/60 pb-8 mb-12">
         <div className="space-y-1">
-          <h1 className={`text-5xl md:text-7xl tracking-tight shine-text leading-snug break-words ${isHe ? "font-hebrew italic font-semibold" : "font-display italic"}`}>{t.title}</h1>
+          <h1 className={`text-5xl md:text-7xl tracking-tight shine-text leading-snug break-words pb-1 ${isHe ? "font-hebrew italic font-semibold" : "font-display italic"}`}>{t.title}</h1>
           <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
             {t.edition}
           </p>
