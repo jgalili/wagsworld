@@ -154,6 +154,8 @@ const I18N = {
     ],
     proTip: "Pro Survival Tip",
     proTipText: "\"When they say 'False Nine', just nod. Don't ask what it means. Nobody actually knows.\"",
+    proTip2: "Pro Survival Tip #2",
+    proTipText2: "\"If he mentions 'xG' three times in one sentence, pour yourself a glass of wine and tune out.\"",
     fakeKit: "Fake-Conversation Kit",
     fake: [
       "\"Their midfield press is a mess.\"",
@@ -260,6 +262,8 @@ const I18N = {
     ],
     proTip: "טיפ הישרדות מקצועי",
     proTipText: "\"כשאומרים 'תשע כוזב', פשוט תהנהני. אל תשאלי מה זה. אף אחד באמת לא יודע.\"",
+    proTip2: "טיפ הישרדות מקצועי #2",
+    proTipText2: "\"אם הוא מזכיר 'xG' שלוש פעמים במשפט אחד, מזגי לך כוס יין ותנתקי.\"",
     fakeKit: "ערכת שיחה מזויפת",
     fake: [
       "\"הלחיצה שלהם בקישור בלגן מוחלט.\"",
