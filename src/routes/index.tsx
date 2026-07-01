@@ -154,6 +154,8 @@ const I18N = {
     ],
     proTip: "Pro Survival Tip",
     proTipText: "\"When they say 'False Nine', just nod. Don't ask what it means. Nobody actually knows.\"",
+    proTip2: "Pro Survival Tip #2",
+    proTipText2: "\"If he mentions 'xG' three times in one sentence, pour yourself a glass of wine and tune out.\"",
     fakeKit: "Fake-Conversation Kit",
     fake: [
       "\"Their midfield press is a mess.\"",
@@ -260,6 +262,8 @@ const I18N = {
     ],
     proTip: "טיפ הישרדות מקצועי",
     proTipText: "\"כשאומרים 'תשע כוזב', פשוט תהנהני. אל תשאלי מה זה. אף אחד באמת לא יודע.\"",
+    proTip2: "טיפ הישרדות מקצועי #2",
+    proTipText2: "\"אם הוא מזכיר 'xG' שלוש פעמים במשפט אחד, מזגי לך כוס יין ותנתקי.\"",
     fakeKit: "ערכת שיחה מזויפת",
     fake: [
       "\"הלחיצה שלהם בקישור בלגן מוחלט.\"",
@@ -849,30 +853,48 @@ function Index() {
           </motion.section>
 
 
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            className="p-6 border-2 border-primary rounded-sm bg-primary/5 shadow-[0_0_40px_-10px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
-          >
-            <p className="font-mono text-[10px] uppercase text-primary font-bold mb-2">
-              {t.proTip}
-            </p>
-            <p className="text-sm leading-snug font-medium italic">
-              {t.proTipText}
-            </p>
-          </motion.div>
-
-          <div className="p-6 border border-border rounded-sm bg-surface/40 backdrop-blur-sm">
-            <p className="font-mono text-[10px] uppercase text-muted-foreground font-bold mb-2">
-              {t.fakeKit}
-            </p>
-            <ul className="text-xs space-y-2 text-muted-foreground">
-              {t.fake.map((f, i) => (
-                <li key={i} className="hover:text-primary transition-colors cursor-default">&mdash; {f}</li>
-              ))}
-            </ul>
-          </div>
 
         </motion.div>
+
+        {/* Full-width row: Survival Tips + Fake Conversation Kit side by side */}
+        <div className="md:col-span-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="p-6 border-2 border-primary rounded-sm bg-primary/5 shadow-[0_0_40px_-10px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
+            >
+              <p className="font-mono text-[10px] uppercase text-primary font-bold mb-2">
+                {t.proTip}
+              </p>
+              <p className="text-sm leading-snug font-medium italic">
+                {t.proTipText}
+              </p>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="p-6 border-2 border-primary/70 rounded-sm bg-primary/5 shadow-[0_0_40px_-10px_color-mix(in_oklab,var(--primary)_50%,transparent)]"
+            >
+              <p className="font-mono text-[10px] uppercase text-primary font-bold mb-2">
+                {t.proTip2}
+              </p>
+              <p className="text-sm leading-snug font-medium italic">
+                {t.proTipText2}
+              </p>
+            </motion.div>
+
+            <div className="p-6 border border-border rounded-sm bg-surface/40 backdrop-blur-sm">
+              <p className="font-mono text-[10px] uppercase text-muted-foreground font-bold mb-2">
+                {t.fakeKit}
+              </p>
+              <ul className="text-xs space-y-2 text-muted-foreground">
+                {t.fake.map((f, i) => (
+                  <li key={i} className="hover:text-primary transition-colors cursor-default">&mdash; {f}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
 
         {/* Full-width horizontal row: Optimal Viewing */}
         <div className="md:col-span-12">
@@ -955,6 +977,49 @@ function Index() {
             >
               {intelQuery.isFetching ? t.fetchingLabel : `↻ ${t.refreshLabel}`}
             </button>
+          </div>
+        </div>
+
+        {/* Juicy Drops */}
+        <div className="mt-14 mb-14">
+          <div className="flex items-baseline justify-between border-b border-border pb-3 mb-6">
+            <h3 className="font-mono text-[11px] uppercase tracking-widest">{t.dropsTitle}</h3>
+            <p className="text-[10px] italic text-muted-foreground">
+              {intel ? `${t.lastFetchedLabel} · ${t.secondsAgo(intelAgo)}` : t.dropsSub}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {(intel?.drops ?? []).map((d, i) => {
+              const headline = isHe ? d.headline_he : d.headline;
+              return (
+                <motion.a
+                  href={d.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  key={`${headline}-${i}`}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + i * 0.07, duration: 0.5 }}
+                  className="group relative block p-4 rounded-sm border border-border bg-surface/50 backdrop-blur-md hover:bg-surface/80 hover:-translate-y-1 transition-all min-w-0"
+                >
+                  <span className="font-mono text-[9px] uppercase tracking-widest text-primary font-bold">
+                    {d.tag}
+                  </span>
+                  <p className="mt-2 text-sm leading-snug font-medium text-pretty break-words min-h-[4.5rem]">
+                    {headline}
+                  </p>
+                  <div className="mt-3 pt-2 border-t border-border/60 flex justify-between items-center gap-2 font-mono text-[9px] uppercase text-muted-foreground tabular-nums min-w-0">
+                    <span className="italic truncate group-hover:text-primary transition-colors">{d.source} ↗</span>
+                    <span className="whitespace-nowrap">{t.minutesAgoLabel(d.minutesAgo)}</span>
+                  </div>
+                </motion.a>
+              );
+            })}
+            {!intel && intelQuery.isLoading && (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-36 rounded-sm border border-border bg-surface/40 animate-pulse" />
+              ))
+            )}
           </div>
         </div>
 
@@ -1079,48 +1144,6 @@ function Index() {
           </div>
         </div>
 
-        {/* Juicy Drops */}
-        <div className="mt-14">
-          <div className="flex items-baseline justify-between border-b border-border pb-3 mb-6">
-            <h3 className="font-mono text-[11px] uppercase tracking-widest">{t.dropsTitle}</h3>
-            <p className="text-[10px] italic text-muted-foreground">
-              {intel ? `${t.lastFetchedLabel} · ${t.secondsAgo(intelAgo)}` : t.dropsSub}
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {(intel?.drops ?? []).map((d, i) => {
-              const headline = isHe ? d.headline_he : d.headline;
-              return (
-                <motion.a
-                  href={d.sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  key={`${headline}-${i}`}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 + i * 0.07, duration: 0.5 }}
-                  className="group relative block p-4 rounded-sm border border-border bg-surface/50 backdrop-blur-md hover:bg-surface/80 hover:-translate-y-1 transition-all min-w-0"
-                >
-                  <span className="font-mono text-[9px] uppercase tracking-widest text-primary font-bold">
-                    {d.tag}
-                  </span>
-                  <p className="mt-2 text-sm leading-snug font-medium text-pretty break-words min-h-[4.5rem]">
-                    {headline}
-                  </p>
-                  <div className="mt-3 pt-2 border-t border-border/60 flex justify-between items-center gap-2 font-mono text-[9px] uppercase text-muted-foreground tabular-nums min-w-0">
-                    <span className="italic truncate group-hover:text-primary transition-colors">{d.source} ↗</span>
-                    <span className="whitespace-nowrap">{t.minutesAgoLabel(d.minutesAgo)}</span>
-                  </div>
-                </motion.a>
-              );
-            })}
-            {!intel && intelQuery.isLoading && (
-              Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-36 rounded-sm border border-border bg-surface/40 animate-pulse" />
-              ))
-            )}
-          </div>
-        </div>
       </motion.section>
 
       <footer className="relative z-10 max-w-7xl mx-auto mt-20 border-t border-foreground/60 py-8 flex flex-col md:flex-row justify-between items-center gap-4">
