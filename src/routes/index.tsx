@@ -727,6 +727,73 @@ function Index() {
             </p>
           </motion.section>
 
+          {/* Live Hottie On The Pitch */}
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="relative overflow-hidden rounded-sm border border-primary/40 bg-gradient-to-b from-background/40 to-primary/5 backdrop-blur-md shadow-[0_0_50px_-20px_var(--primary)]"
+          >
+            <div className="relative aspect-[4/3] overflow-hidden">
+              <img
+                src={player3}
+                alt={t.liveHottie.name}
+                className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700 scale-105 hover:scale-100"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+              <div className="absolute top-3 left-3 rtl:left-auto rtl:right-3 inline-flex items-center gap-2 bg-background/70 backdrop-blur-md px-2.5 py-1 rounded-full ring-1 ring-primary/40">
+                <span className="relative flex size-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                  <span className="relative inline-flex rounded-full size-2 bg-primary" />
+                </span>
+                <span className="font-mono text-[9px] uppercase tracking-widest text-primary font-bold">
+                  {t.liveHottie.badge}
+                </span>
+              </div>
+              <div className="absolute bottom-3 left-4 right-4 rtl:left-4 rtl:right-4">
+                <h3 className="font-display italic text-2xl leading-none">{t.liveHottie.name}</h3>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
+                  {t.liveHottie.meta}
+                </p>
+              </div>
+            </div>
+            <div className="p-5 space-y-4">
+              <p className="text-sm italic text-pretty">{t.liveHottie.tagline}</p>
+
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-primary font-bold mb-2">
+                  {t.liveHottie.looksLabel}
+                </p>
+                <ul className="text-xs space-y-1.5 text-muted-foreground">
+                  {t.liveHottie.looks.map((l, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="text-primary">♡</span>
+                      <span>{l}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-primary font-bold mb-2">
+                  {t.liveHottie.gameLabel}
+                </p>
+                <ul className="text-xs space-y-1.5 text-muted-foreground">
+                  {t.liveHottie.game.map((g, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="text-primary tabular-nums">{String(i + 1).padStart(2, "0")}</span>
+                      <span>{g}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <p className="text-[11px] pt-3 border-t border-border/60 italic text-primary/80">
+                {t.liveHottie.watch}
+              </p>
+            </div>
+          </motion.section>
+
           <section>
             <h2 className="font-mono text-[11px] uppercase tracking-widest border-b border-border pb-2 mb-6">
               {t.viewingTitle}
