@@ -28,6 +28,51 @@ function useCountdown(target: Date) {
   return { days, hours, minutes, seconds };
 }
 
+// Simulated live match feed — jitters every ~3s, minute ticks every ~20s.
+function useLiveMatch() {
+  const [state, setState] = useState(() => ({
+    minute: 54,
+    score: [1, 0] as [number, number],
+    possession: [58, 42] as [number, number],
+    shots: [4, 2] as [number, number],
+    xg: [1.24, 0.61] as [number, number],
+    lastUpdated: Date.now(),
+  }));
+  useEffect(() => {
+    const id = setInterval(() => {
+      setState((s) => {
+        const drift = () => Math.round((Math.random() - 0.5) * 6);
+        let a = Math.max(30, Math.min(70, s.possession[0] + drift()));
+        let sa = s.shots[0] + (Math.random() > 0.85 ? 1 : 0);
+        let sb = s.shots[1] + (Math.random() > 0.9 ? 1 : 0);
+        const xa = +(s.xg[0] + Math.random() * 0.08).toFixed(2);
+        const xb = +(s.xg[1] + Math.random() * 0.05).toFixed(2);
+        return {
+          ...s,
+          possession: [a, 100 - a],
+          shots: [sa, sb],
+          xg: [xa, xb],
+          lastUpdated: Date.now(),
+        };
+      });
+    }, 3200);
+    const tick = setInterval(() => {
+      setState((s) => ({ ...s, minute: Math.min(90, s.minute + 1), lastUpdated: Date.now() }));
+    }, 22000);
+    return () => { clearInterval(id); clearInterval(tick); };
+  }, []);
+  return state;
+}
+
+function useAgo(ts: number) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return Math.max(0, Math.floor((now - ts) / 1000));
+}
+
 type Lang = "en" | "he";
 
 const I18N = {
