@@ -918,45 +918,56 @@ function Index() {
           </div>
         </div>
 
-        {/* Full-width horizontal row: Optimal Viewing */}
+        {/* Full-width horizontal row: Optimal Viewing — REAL fixtures from ESPN */}
         <div className="md:col-span-12">
-          {/* Optimal Viewing */}
           <section>
-            <h2 className="font-mono text-[11px] uppercase tracking-widest border-b border-border pb-2 mb-6">
-              {t.viewingTitle}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {t.fixtures.map((f, i) => (
-                <motion.div
-                  key={f.match}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.1 + i * 0.1, duration: 0.6 }}
-                  className="space-y-3"
-                >
-                  <div className="flex justify-between items-center">
-                    <span className="font-mono text-[10px] uppercase bg-foreground text-background px-1.5 py-0.5">
-                      {f.time}
-                    </span>
-                    <span className="text-[10px] text-primary font-bold uppercase">
-                      {f.when}
-                    </span>
-                  </div>
-                  <p className="font-bold text-lg leading-tight uppercase tracking-tighter">
-                    {f.match}
-                  </p>
-                  <div className="p-3 bg-muted/60 backdrop-blur-sm rounded-sm border border-border/60">
-                    <p className="text-[10px] font-bold uppercase mb-1 text-primary">
-                      {t.optimalWindow}
-                    </p>
-                    <p className="text-xs leading-relaxed italic text-muted-foreground">
-                      {f.window}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
+            <div className="flex items-baseline justify-between border-b border-border pb-2 mb-6">
+              <h2 className="font-mono text-[11px] uppercase tracking-widest">
+                {t.fixturesTitle}
+              </h2>
+              <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                {t.liveDataFrom} · {t.updated} {t.secondsAgo(liveAgo)}
+              </span>
             </div>
+            {liveData && liveData.upcoming.length === 0 ? (
+              <p className="text-sm italic text-muted-foreground">{t.noFixtures}</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {(liveData?.upcoming ?? []).slice(0, 6).map((f, i) => (
+                  <motion.a
+                    key={f.id}
+                    href={f.espnUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.1 + i * 0.1, duration: 0.6 }}
+                    className="block space-y-3 group"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-mono text-[10px] uppercase bg-foreground text-background px-1.5 py-0.5 tabular-nums">
+                        {fmtKickoff(f.kickoffISO, lang)}
+                      </span>
+                      <span className="text-[10px] text-primary font-bold uppercase">
+                        {relativeWhen(f.kickoffISO, lang)}
+                      </span>
+                    </div>
+                    <p className="font-bold text-lg leading-tight uppercase tracking-tighter group-hover:text-primary transition-colors">
+                      {f.home.shortName} <span className="opacity-40">vs</span> {f.away.shortName}
+                    </p>
+                    <div className="p-3 bg-muted/60 backdrop-blur-sm rounded-sm border border-border/60">
+                      <p className="text-[10px] font-bold uppercase mb-1 text-primary">
+                        {f.competition}
+                      </p>
+                      <p className="text-xs leading-relaxed italic text-muted-foreground">
+                        {f.venue ? `@ ${f.venue}` : f.detail}
+                      </p>
+                    </div>
+                  </motion.a>
+                ))}
+              </div>
+            )}
           </section>
         </div>
       </main>
