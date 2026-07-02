@@ -425,12 +425,14 @@ function Index() {
           {theme === "light" ? t.lightMode : t.darkMode}
         </button>
 
-        <div className="inline-flex items-center gap-2 border border-primary/50 rounded-full px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest bg-primary/10 backdrop-blur-md">
+        <div className={`inline-flex items-center gap-2 border rounded-full px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest backdrop-blur-md ${liveMatch ? "border-primary/50 bg-primary/10" : "border-border bg-background/40"}`}>
           <span className="relative flex size-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-            <span className="relative inline-flex rounded-full size-2 bg-primary" />
+            {liveMatch && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />}
+            <span className={`relative inline-flex rounded-full size-2 ${liveMatch ? "bg-primary" : "bg-success"}`} />
           </span>
-          <span className="text-primary font-bold">{t.liveBadge}</span>
+          <span className={liveMatch ? "text-primary font-bold" : "text-muted-foreground font-bold"}>
+            {liveMatch ? t.liveBadge : t.noLiveTitle}
+          </span>
           <span className="opacity-60">·</span>
           <span className="tabular-nums">{t.updated} {t.secondsAgo(liveAgo)}</span>
         </div>
