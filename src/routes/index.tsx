@@ -875,8 +875,10 @@ function Index() {
           >
             <div className="relative aspect-[4/3] overflow-hidden">
               <img
-                src={player3}
-                alt={t.liveHottie.name}
+                src={livePlayingHottie
+                  ? `https://picsum.photos/seed/${encodeURIComponent(livePlayingHottie.imageSeed)}/600/450`
+                  : player3}
+                alt={livePlayingHottie?.name ?? t.liveHottie.name}
                 className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700 scale-105 hover:scale-100"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
@@ -890,14 +892,38 @@ function Index() {
                 </span>
               </div>
               <div className="absolute bottom-3 left-4 right-4 rtl:left-4 rtl:right-4">
-                <h3 className="font-display italic text-2xl leading-none">{t.liveHottie.name}</h3>
+                <h3 className="font-display italic text-2xl leading-none">
+                  {livePlayingHottie?.name ?? t.liveHottie.name}
+                </h3>
                 <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
-                  {t.liveHottie.meta}
+                  {livePlayingHottie
+                    ? `${livePlayingHottie.country} · ${livePlayingHottie.role} · ${livePlayingHottie.match}`
+                    : t.liveHottie.meta}
                 </p>
               </div>
             </div>
             <div className="p-5 space-y-4">
-              <p className="text-sm italic text-pretty">{t.liveHottie.tagline}</p>
+              <p className="text-sm italic text-pretty">
+                {livePlayingHottie
+                  ? (isHe ? livePlayingHottie.blurb_he : livePlayingHottie.blurb)
+                  : t.liveHottie.tagline}
+              </p>
+
+              {livePlayingHottie && (
+                <a
+                  href={livePlayingHottie.socialUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block p-3 rounded-sm border border-primary/40 bg-primary/5 hover:bg-primary/10 transition-colors"
+                >
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-primary font-bold mb-1">
+                    {t.socialsLabel} ↗
+                  </p>
+                  <p className="text-xs italic text-pretty">
+                    {isHe ? livePlayingHottie.socialTeaser_he : livePlayingHottie.socialTeaser}
+                  </p>
+                </a>
+              )}
 
               <div>
                 <p className="font-mono text-[10px] uppercase tracking-widest text-primary font-bold mb-2">
