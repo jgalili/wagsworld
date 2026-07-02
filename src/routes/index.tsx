@@ -377,14 +377,43 @@ function Index() {
   const playerImages = [player1, player2, player3, player4];
   const [playerFilter, setPlayerFilter] = useState<"week" | "last">("week");
   const [playerIdx, setPlayerIdx] = useState(0);
-  const filteredPlayers = t.players
-    .map((p, i) => ({ ...p, _img: playerImages[i % playerImages.length], _rank: i + 1 }))
-    .filter((p) => (playerFilter === "week" ? p.daysAgo <= 3 : p.daysAgo >= 4 && p.daysAgo <= 7));
+
+  // Prefer live AI-generated hot players; fall back to static list.
+  const livePlayersRaw = intel?.hotPlayers ?? [];
+  const livePlayersMapped = livePlayersRaw.map((p, i) => ({
+    country: p.country,
+    name: p.name,
+    blurb: isHe ? p.blurb_he : p.blurb,
+    score: p.score,
+    daysAgo: Math.max(0, Math.floor((p.hoursAgo ?? 0) / 24)),
+    match: p.match,
+    role: p.role,
+    socialTeaser: isHe ? p.socialTeaser_he : p.socialTeaser,
+    socialUrl: p.socialUrl,
+    isPlayingLive: p.isPlayingLive,
+    _img: `https://picsum.photos/seed/${encodeURIComponent(p.imageSeed || `${p.name}-${i}`)}/560/700`,
+    _rank: i + 1,
+  }));
+  const staticMapped = t.players.map((p, i) => ({
+    ...p,
+    role: "",
+    socialTeaser: "",
+    socialUrl: "",
+    isPlayingLive: false,
+    _img: playerImages[i % playerImages.length],
+    _rank: i + 1,
+  }));
+  const allPlayers = livePlayersMapped.length ? livePlayersMapped : staticMapped;
+  const filteredPlayers = allPlayers.filter((p) =>
+    playerFilter === "week" ? p.daysAgo <= 3 : p.daysAgo >= 2,
+  );
   const safeIdx = filteredPlayers.length ? playerIdx % filteredPlayers.length : 0;
   const current = filteredPlayers[safeIdx];
+  // Pick the top live-playing player from intel (if any) — used to override the live hottie card.
+  const livePlayingHottie = livePlayersRaw.find((p) => p.isPlayingLive);
   const goPrev = () => setPlayerIdx((i) => (i - 1 + filteredPlayers.length) % filteredPlayers.length);
   const goNext = () => setPlayerIdx((i) => (i + 1) % filteredPlayers.length);
-  useEffect(() => { setPlayerIdx(0); }, [playerFilter]);
+  useEffect(() => { setPlayerIdx(0); }, [playerFilter, livePlayersMapped.length]);
 
   useEffect(() => {
     const root = document.documentElement;
