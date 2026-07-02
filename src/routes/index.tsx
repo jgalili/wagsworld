@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
 import { getMondialIntel } from "@/lib/mondial-intel.functions";
+import { getMondialLive, type LiveMatch } from "@/lib/mondial-live.functions";
 import player1 from "@/assets/player-1.jpg";
 import player2 from "@/assets/player-2.jpg";
 import player3 from "@/assets/player-3.jpg";
@@ -30,40 +31,24 @@ function useCountdown(target: Date) {
   return { days, hours, minutes, seconds };
 }
 
-// Simulated live match feed — jitters every ~3s, minute ticks every ~20s.
-function useLiveMatch() {
-  const [state, setState] = useState(() => ({
-    minute: 54,
-    score: [1, 0] as [number, number],
-    possession: [58, 42] as [number, number],
-    shots: [4, 2] as [number, number],
-    xg: [1.24, 0.61] as [number, number],
-    lastUpdated: Date.now(),
-  }));
-  useEffect(() => {
-    const id = setInterval(() => {
-      setState((s) => {
-        const drift = () => Math.round((Math.random() - 0.5) * 6);
-        let a = Math.max(30, Math.min(70, s.possession[0] + drift()));
-        let sa = s.shots[0] + (Math.random() > 0.85 ? 1 : 0);
-        let sb = s.shots[1] + (Math.random() > 0.9 ? 1 : 0);
-        const xa = +(s.xg[0] + Math.random() * 0.08).toFixed(2);
-        const xb = +(s.xg[1] + Math.random() * 0.05).toFixed(2);
-        return {
-          ...s,
-          possession: [a, 100 - a],
-          shots: [sa, sb],
-          xg: [xa, xb],
-          lastUpdated: Date.now(),
-        };
-      });
-    }, 3200);
-    const tick = setInterval(() => {
-      setState((s) => ({ ...s, minute: Math.min(90, s.minute + 1), lastUpdated: Date.now() }));
-    }, 22000);
-    return () => { clearInterval(id); clearInterval(tick); };
-  }, []);
-  return state;
+// Format kickoff in the viewer's locale/timezone.
+function fmtKickoff(iso: string, lang: Lang) {
+  const d = new Date(iso);
+  return new Intl.DateTimeFormat(lang === "he" ? "he-IL" : "en-GB", {
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(d);
+}
+
+function relativeWhen(iso: string, lang: Lang) {
+  const now = Date.now();
+  const t = new Date(iso).getTime();
+  const diffH = (t - now) / 3_600_000;
+  if (diffH < 0 && diffH > -3) return lang === "he" ? "עכשיו" : "Just now";
+  if (diffH >= 0 && diffH < 6) return lang === "he" ? "היום" : "Today";
+  if (diffH >= 6 && diffH < 30) return lang === "he" ? "מחר" : "Tomorrow";
+  return fmtKickoff(iso, lang).split(",")[0];
 }
 
 function useAgo(ts: number) {
@@ -165,6 +150,13 @@ const I18N = {
     footerLinks: ["The Exit Strategy", "Mute Keywords", "Peace Protocols"],
     dLabel: "D", hLabel: "H", mLabel: "M", sLabel: "S",
     lightMode: "Light", darkMode: "Dark", langLabel: "Language",
+    noLiveTitle: "No Match Live Right Now",
+    noLiveBody: "Rare pocket of peace. Enjoy while it lasts.",
+    nextKickoff: "Next kickoff",
+    liveDataFrom: "Live data · ESPN",
+    fixturesTitle: "Next Up (Live from ESPN)",
+    noFixtures: "No scheduled matches in the next few days. The internet will find something else to be loud about.",
+    recentTitle: "Just Finished",
     intelTitle: "Betting Intel & Juicy Feed",
     intelSub: "Live from the money — and the tunnel cameras.",
     marketsTitle: "Prediction Markets",
@@ -273,6 +265,13 @@ const I18N = {
     footerLinks: ["אסטרטגיית יציאה", "מילות השתקה", "פרוטוקולי שלום"],
     dLabel: "י", hLabel: "ש", mLabel: "ד", sLabel: "ש",
     lightMode: "בהיר", darkMode: "כהה", langLabel: "שפה",
+    noLiveTitle: "אין משחק חי כרגע",
+    noLiveBody: "רגע נדיר של שקט. תיהני עד שזה נגמר.",
+    nextKickoff: "שריקת פתיחה הבאה",
+    liveDataFrom: "נתונים חיים · ESPN",
+    fixturesTitle: "הבאים בתור (חי מ-ESPN)",
+    noFixtures: "אין משחקים מתוזמנים בימים הקרובים. האינטרנט ימצא במה עוד לצרוח.",
+    recentTitle: "בדיוק הסתיים",
     intelTitle: "מודיעין הימורים ופיד עסיסי",
     intelSub: "ישר מהכסף — ומהמצלמות במנהרה.",
     marketsTitle: "שוקי חיזוי",
@@ -333,9 +332,18 @@ function Index() {
   const t = I18N[lang];
   const isHe = lang === "he";
 
-  // Live match simulation
-  const live = useLiveMatch();
-  const liveAgo = useAgo(live.lastUpdated);
+  // Live World Cup data from ESPN — polled every 20s.
+  const liveQuery = useQuery({
+    queryKey: ["mondial-live"],
+    queryFn: () => getMondialLive(),
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
+    staleTime: 15_000,
+  });
+  const liveData = liveQuery.data;
+  const liveMatch: LiveMatch | undefined = liveData?.live[0];
+  const nextMatch: LiveMatch | undefined = liveData?.upcoming[0];
+  const liveAgo = useAgo(liveData?.generatedAt ?? Date.now());
 
   // Live betting intel + juicy news — refreshed on every mount
   const intelQuery = useQuery({
@@ -417,12 +425,14 @@ function Index() {
           {theme === "light" ? t.lightMode : t.darkMode}
         </button>
 
-        <div className="inline-flex items-center gap-2 border border-primary/50 rounded-full px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest bg-primary/10 backdrop-blur-md">
+        <div className={`inline-flex items-center gap-2 border rounded-full px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest backdrop-blur-md ${liveMatch ? "border-primary/50 bg-primary/10" : "border-border bg-background/40"}`}>
           <span className="relative flex size-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-            <span className="relative inline-flex rounded-full size-2 bg-primary" />
+            {liveMatch && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />}
+            <span className={`relative inline-flex rounded-full size-2 ${liveMatch ? "bg-primary" : "bg-success"}`} />
           </span>
-          <span className="text-primary font-bold">{t.liveBadge}</span>
+          <span className={liveMatch ? "text-primary font-bold" : "text-muted-foreground font-bold"}>
+            {liveMatch ? t.liveBadge : t.noLiveTitle}
+          </span>
           <span className="opacity-60">·</span>
           <span className="tabular-nums">{t.updated} {t.secondsAgo(liveAgo)}</span>
         </div>
@@ -694,98 +704,113 @@ function Index() {
 
         {/* RIGHT: fixtures + tip */}
         <motion.div {...fade(0.45)} className="md:col-span-3 space-y-12">
-          {/* Live match */}
-          <motion.section
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6 }}
-            className="relative overflow-hidden rounded-sm border border-primary/40 bg-gradient-to-br from-primary/10 via-background/40 to-background/40 backdrop-blur-md p-5 shadow-[0_0_50px_-15px_var(--primary)]"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="inline-flex items-center gap-2">
-                <span className="relative flex size-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                  <span className="relative inline-flex rounded-full size-2.5 bg-primary" />
+          {/* Live match — only renders when there IS a live match on ESPN */}
+          {liveMatch ? (
+            <motion.a
+              href={liveMatch.espnUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6 }}
+              className="block relative overflow-hidden rounded-sm border border-primary/40 bg-gradient-to-br from-primary/10 via-background/40 to-background/40 backdrop-blur-md p-5 shadow-[0_0_50px_-15px_var(--primary)] hover:border-primary transition-colors"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="inline-flex items-center gap-2">
+                  <span className="relative flex size-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                    <span className="relative inline-flex rounded-full size-2.5 bg-primary" />
+                  </span>
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-primary font-bold">
+                    {t.liveBadge} · {liveMatch.competition}
+                  </span>
+                </div>
+                <span className="font-mono text-[10px] tabular-nums text-primary">
+                  {liveMatch.minute ?? liveMatch.detail}
                 </span>
-                <span className="font-mono text-[10px] uppercase tracking-widest text-primary font-bold">
-                  {t.liveBadge} · {t.liveTitle}
+              </div>
+
+              <div dir="ltr" className="flex items-center justify-between gap-2 mb-5">
+                <div className="text-center flex-1">
+                  {liveMatch.home.logo && (
+                    <img src={liveMatch.home.logo} alt="" className="w-8 h-8 mx-auto mb-1 object-contain" />
+                  )}
+                  <p className="font-mono text-[10px] uppercase text-muted-foreground">{liveMatch.home.abbr}</p>
+                  <motion.p
+                    key={liveMatch.home.score}
+                    initial={{ scale: 1.4, color: "var(--primary)" }}
+                    animate={{ scale: 1, color: "var(--foreground)" }}
+                    transition={{ duration: 0.4 }}
+                    className="text-4xl font-extrabold tabular-nums"
+                  >
+                    {liveMatch.home.score || "0"}
+                  </motion.p>
+                </div>
+                <span className="font-display text-2xl italic text-muted-foreground">—</span>
+                <div className="text-center flex-1">
+                  {liveMatch.away.logo && (
+                    <img src={liveMatch.away.logo} alt="" className="w-8 h-8 mx-auto mb-1 object-contain" />
+                  )}
+                  <p className="font-mono text-[10px] uppercase text-muted-foreground">{liveMatch.away.abbr}</p>
+                  <motion.p
+                    key={liveMatch.away.score}
+                    initial={{ scale: 1.4, color: "var(--primary)" }}
+                    animate={{ scale: 1, color: "var(--foreground)" }}
+                    transition={{ duration: 0.4 }}
+                    className="text-4xl font-extrabold tabular-nums"
+                  >
+                    {liveMatch.away.score || "0"}
+                  </motion.p>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-center text-muted-foreground italic">
+                {liveMatch.home.name} vs {liveMatch.away.name}
+                {liveMatch.venue && <span className="block opacity-70 not-italic mt-1">@ {liveMatch.venue}</span>}
+              </p>
+
+              <p className="mt-4 pt-3 border-t border-border/60 text-[11px] italic text-muted-foreground">
+                {t.liveVerdict}
+              </p>
+              <p className="mt-2 font-mono text-[9px] uppercase tracking-widest text-primary/70 tabular-nums flex justify-between">
+                <span>{t.liveDataFrom}</span>
+                <span>{t.updated} {t.secondsAgo(liveAgo)}</span>
+              </p>
+            </motion.a>
+          ) : (
+            <motion.section
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6 }}
+              className="relative overflow-hidden rounded-sm border border-border bg-surface/40 backdrop-blur-md p-5"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  {t.noLiveTitle}
                 </span>
+                <span className="size-2 rounded-full bg-success" />
               </div>
-              <span className="font-mono text-[10px] tabular-nums text-primary">
-                {live.minute}' {t.liveMinute}
-              </span>
-            </div>
-
-            <div dir="ltr" className="flex items-center justify-between gap-2 mb-5">
-              <div className="text-center flex-1">
-                <p className="font-mono text-[10px] uppercase text-muted-foreground">FRA</p>
-                <motion.p
-                  key={live.score[0]}
-                  initial={{ scale: 1.4, color: "var(--primary)" }}
-                  animate={{ scale: 1, color: "var(--foreground)" }}
-                  transition={{ duration: 0.4 }}
-                  className="text-4xl font-extrabold tabular-nums"
-                >
-                  {live.score[0]}
-                </motion.p>
-              </div>
-              <span className="font-display text-2xl italic text-muted-foreground">—</span>
-              <div className="text-center flex-1">
-                <p className="font-mono text-[10px] uppercase text-muted-foreground">ARG</p>
-                <motion.p
-                  key={live.score[1]}
-                  initial={{ scale: 1.4, color: "var(--primary)" }}
-                  animate={{ scale: 1, color: "var(--foreground)" }}
-                  transition={{ duration: 0.4 }}
-                  className="text-4xl font-extrabold tabular-nums"
-                >
-                  {live.score[1]}
-                </motion.p>
-              </div>
-            </div>
-
-            {/* Possession bar */}
-            <div className="space-y-3 text-[11px] font-mono">
-              <div>
-                <div className="flex justify-between mb-1 tabular-nums">
-                  <span>{live.possession[0]}%</span>
-                  <span className="uppercase text-muted-foreground">{t.livePossession}</span>
-                  <span>{live.possession[1]}%</span>
+              <p className="text-sm italic text-muted-foreground mb-4">{t.noLiveBody}</p>
+              {nextMatch && (
+                <div className="pt-3 border-t border-border/60">
+                  <p className="font-mono text-[9px] uppercase text-primary/80 mb-1">{t.nextKickoff}</p>
+                  <p className="text-sm font-bold">
+                    {nextMatch.home.abbr} vs {nextMatch.away.abbr}
+                  </p>
+                  <p className="font-mono text-[10px] tabular-nums text-muted-foreground mt-0.5">
+                    {fmtKickoff(nextMatch.kickoffISO, lang)} · {nextMatch.competition}
+                  </p>
                 </div>
-                <div dir="ltr" className="flex h-1.5 rounded-full overflow-hidden bg-muted">
-                  <motion.div
-                    animate={{ width: `${live.possession[0]}%` }}
-                    transition={{ duration: 0.8 }}
-                    className="bg-primary h-full"
-                  />
-                  <motion.div
-                    animate={{ width: `${live.possession[1]}%` }}
-                    transition={{ duration: 0.8 }}
-                    className="bg-foreground/50 h-full"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <div className="border border-border/60 rounded-sm p-2">
-                  <p className="uppercase text-muted-foreground text-[9px]">{t.liveShots}</p>
-                  <p className="tabular-nums text-lg font-bold">{live.shots[0]} <span className="text-muted-foreground text-xs">/</span> {live.shots[1]}</p>
-                </div>
-                <div className="border border-border/60 rounded-sm p-2">
-                  <p className="uppercase text-muted-foreground text-[9px]">{t.liveXg}</p>
-                  <p className="tabular-nums text-lg font-bold">{live.xg[0].toFixed(2)} <span className="text-muted-foreground text-xs">/</span> {live.xg[1].toFixed(2)}</p>
-                </div>
-              </div>
-            </div>
+              )}
+              <p className="mt-3 font-mono text-[9px] uppercase tracking-widest text-muted-foreground/70 tabular-nums flex justify-between">
+                <span>{t.liveDataFrom}</span>
+                <span>{t.updated} {t.secondsAgo(liveAgo)}</span>
+              </p>
+            </motion.section>
+          )}
 
-            <p className="mt-4 pt-3 border-t border-border/60 text-[11px] italic text-muted-foreground">
-              {t.liveVerdict}
-            </p>
-            <p className="mt-2 font-mono text-[9px] uppercase tracking-widest text-primary/70 tabular-nums">
-              {t.updated} {t.secondsAgo(liveAgo)}
-            </p>
-          </motion.section>
-
-          {/* Live Hottie On The Pitch */}
+          {/* Live Hottie On The Pitch — only when a match is actually LIVE */}
+          {liveMatch && (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -851,8 +876,7 @@ function Index() {
               </p>
             </div>
           </motion.section>
-
-
+          )}
 
         </motion.div>
 
@@ -896,45 +920,56 @@ function Index() {
           </div>
         </div>
 
-        {/* Full-width horizontal row: Optimal Viewing */}
+        {/* Full-width horizontal row: Optimal Viewing — REAL fixtures from ESPN */}
         <div className="md:col-span-12">
-          {/* Optimal Viewing */}
           <section>
-            <h2 className="font-mono text-[11px] uppercase tracking-widest border-b border-border pb-2 mb-6">
-              {t.viewingTitle}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {t.fixtures.map((f, i) => (
-                <motion.div
-                  key={f.match}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.1 + i * 0.1, duration: 0.6 }}
-                  className="space-y-3"
-                >
-                  <div className="flex justify-between items-center">
-                    <span className="font-mono text-[10px] uppercase bg-foreground text-background px-1.5 py-0.5">
-                      {f.time}
-                    </span>
-                    <span className="text-[10px] text-primary font-bold uppercase">
-                      {f.when}
-                    </span>
-                  </div>
-                  <p className="font-bold text-lg leading-tight uppercase tracking-tighter">
-                    {f.match}
-                  </p>
-                  <div className="p-3 bg-muted/60 backdrop-blur-sm rounded-sm border border-border/60">
-                    <p className="text-[10px] font-bold uppercase mb-1 text-primary">
-                      {t.optimalWindow}
-                    </p>
-                    <p className="text-xs leading-relaxed italic text-muted-foreground">
-                      {f.window}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
+            <div className="flex items-baseline justify-between border-b border-border pb-2 mb-6">
+              <h2 className="font-mono text-[11px] uppercase tracking-widest">
+                {t.fixturesTitle}
+              </h2>
+              <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                {t.liveDataFrom} · {t.updated} {t.secondsAgo(liveAgo)}
+              </span>
             </div>
+            {liveData && liveData.upcoming.length === 0 ? (
+              <p className="text-sm italic text-muted-foreground">{t.noFixtures}</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {(liveData?.upcoming ?? []).slice(0, 6).map((f, i) => (
+                  <motion.a
+                    key={f.id}
+                    href={f.espnUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.1 + i * 0.1, duration: 0.6 }}
+                    className="block space-y-3 group"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-mono text-[10px] uppercase bg-foreground text-background px-1.5 py-0.5 tabular-nums">
+                        {fmtKickoff(f.kickoffISO, lang)}
+                      </span>
+                      <span className="text-[10px] text-primary font-bold uppercase">
+                        {relativeWhen(f.kickoffISO, lang)}
+                      </span>
+                    </div>
+                    <p className="font-bold text-lg leading-tight uppercase tracking-tighter group-hover:text-primary transition-colors">
+                      {f.home.shortName} <span className="opacity-40">vs</span> {f.away.shortName}
+                    </p>
+                    <div className="p-3 bg-muted/60 backdrop-blur-sm rounded-sm border border-border/60">
+                      <p className="text-[10px] font-bold uppercase mb-1 text-primary">
+                        {f.competition}
+                      </p>
+                      <p className="text-xs leading-relaxed italic text-muted-foreground">
+                        {f.venue ? `@ ${f.venue}` : f.detail}
+                      </p>
+                    </div>
+                  </motion.a>
+                ))}
+              </div>
+            )}
           </section>
         </div>
       </main>
