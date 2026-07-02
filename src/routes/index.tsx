@@ -807,7 +807,8 @@ function Index() {
             </motion.section>
           )}
 
-          {/* Live Hottie On The Pitch */}
+          {/* Live Hottie On The Pitch — only when a match is actually LIVE */}
+          {liveMatch && (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
