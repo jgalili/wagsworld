@@ -31,11 +31,43 @@ export type JuicyDrop = {
   tag: "SCANDAL" | "INJURY" | "DRAMA" | "MONEY" | "OFF-PITCH";
 };
 
+export type GossipItem = {
+  player: string;
+  country: string;
+  headline: string;
+  headline_he: string;
+  caption: string;
+  caption_he: string;
+  verdict: "HIT" | "MISS" | "CHAOS";
+  source: string;
+  sourceUrl: string;
+  imageSeed: string; // used for picsum.photos seed
+  minutesAgo: number;
+};
+
+export type HotPlayerLive = {
+  name: string;
+  country: string;
+  role: string; // e.g. "Winger", "GK"
+  blurb: string;
+  blurb_he: string;
+  socialTeaser: string; // one-line naughty/kinky/interesting social tidbit
+  socialTeaser_he: string;
+  socialUrl: string;
+  imageSeed: string;
+  score: string; // "9.4"
+  hoursAgo: number; // how recent
+  isPlayingLive: boolean; // whether they're from a team currently on the pitch
+  match: string; // e.g. "vs Croatia" or "LIVE vs Portugal"
+};
+
 export type MondialIntel = {
   fetchedAt: number;
   markets: BettingMarket[];
   winners: BiggestWinner[];
   drops: JuicyDrop[];
+  gossip: GossipItem[];
+  hotPlayers: HotPlayerLive[];
   totalWageredUsd: number;
   polymarketOnline: boolean;
 };
@@ -49,6 +81,8 @@ Return STRICT JSON, no prose, matching this TypeScript type:
   "markets": Array<{ "question": string, "question_he": string, "topOption": string, "topOption_he": string, "pricePct": number, "volumeUsd": number, "take": string, "take_he": string, "url": string }>, // 4 items
   "winners": Array<{ "handle": string, "amountUsd": number, "wager": string, "wager_he": string, "vibe": string, "vibe_he": string, "profileUrl": string }>, // 3 items
   "drops": Array<{ "headline": string, "headline_he": string, "source": string, "sourceUrl": string, "minutesAgo": number, "tag": "SCANDAL"|"INJURY"|"DRAMA"|"MONEY"|"OFF-PITCH" }>, // 5 items
+  "gossip": Array<{ "player": string, "country": string, "headline": string, "headline_he": string, "caption": string, "caption_he": string, "verdict": "HIT"|"MISS"|"CHAOS", "source": string, "sourceUrl": string, "imageSeed": string, "minutesAgo": number }>, // 6 items — fashion / red carpet / airport looks / off-pitch outfit hits & misses in the last 72h
+  "hotPlayers": Array<{ "name": string, "country": string, "role": string, "blurb": string, "blurb_he": string, "socialTeaser": string, "socialTeaser_he": string, "socialUrl": string, "imageSeed": string, "score": string, "hoursAgo": number, "isPlayingLive": boolean, "match": string }>, // 8 items — current hottest players. If a match is happening RIGHT NOW at the current UTC time based on real 2026 World Cup schedule, mark ONE hot player from a team playing right now as isPlayingLive:true. Otherwise ALL isPlayingLive:false. Sort most-recent first (hoursAgo ascending).
   "totalWageredUsd": number
 }
 
@@ -62,11 +96,30 @@ HARD RULES:
 - "sourceUrl": a Google News search URL for the headline: "https://news.google.com/search?q=" + URL-encoded key words of the headline in English.
 - "url" (markets): Polymarket search URL: "https://polymarket.com/markets?_q=" + URL-encoded key search terms in English (e.g. "world cup golden boot").
 - "profileUrl" (winners): "https://polymarket.com/profile/" + the handle without @.
+- Gossip "imageSeed" / hotPlayers "imageSeed": a short URL-safe slug (lowercase, hyphens, no spaces), unique per item, e.g. "vidal-spain-tunnel-fit".
+- Gossip "sourceUrl": Google search URL for the specific outfit/incident: "https://www.google.com/search?q=" + encoded "player name outfit tunnel gossip" plus "&tbm=isch" for image results.
+- Gossip "caption"/"caption_he": one dry, funny sentence about the outfit, max 110 chars.
+- Gossip "headline"/"headline_he": name the player AND country AND garment/incident, max 100 chars.
+- hotPlayers "blurb"/"blurb_he": max 120 chars, mention the country and one sexy attribute.
+- hotPlayers "socialTeaser"/"socialTeaser_he": one sentence, max 110 chars — something genuinely interesting, kinky, thirst-trap-y, or naughty from their socials (a shirtless recovery pic, a suspiciously-timed hard-launch, a cryptic story, a locker-room video). Must name the platform.
+- hotPlayers "socialUrl": "https://www.google.com/search?q=" + encoded "<player name> instagram" (or tiktok/twitter depending on teaser).
+- hotPlayers "role": specific position ("Left winger", "Center-back", "Goalkeeper", "#10", "Wing-back").
+- hotPlayers "score": one decimal, 8.4–9.9.
+- hotPlayers "hoursAgo": 0–72 (0 means currently on the pitch or just off it).
+- If isPlayingLive is true, match must start with "LIVE — ".
 - Hebrew fields = natural Hebrew, same tone.
 - Vary content every call.`;
 
 const g = (q: string) => `https://news.google.com/search?q=${encodeURIComponent(q)}`;
 const pm = (q: string) => `https://polymarket.com/markets?_q=${encodeURIComponent(q)}`;
+const gs = (q: string) => `https://www.google.com/search?q=${encodeURIComponent(q)}&tbm=isch`;
+const gw = (q: string) => `https://www.google.com/search?q=${encodeURIComponent(q)}`;
+const slug = (s: string) =>
+  (s || "player")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 40) || "player";
 
 const FALLBACK: Omit<MondialIntel, "fetchedAt" | "polymarketOnline"> = {
   totalWageredUsd: 48_312_000,
@@ -187,6 +240,208 @@ const FALLBACK: Omit<MondialIntel, "fetchedAt" | "polymarketOnline"> = {
       tag: "OFF-PITCH",
     },
   ],
+  gossip: [
+    {
+      player: "Mateo Vidal",
+      country: "Spain",
+      headline: "Spain's Mateo Vidal arrived at the stadium in a full leather tracksuit.",
+      headline_he: "מטאו וידאל, ספרד, הגיע לאצטדיון בחליפת עור מלאה.",
+      caption: "Confidence: 100. Ventilation: 0. We respect the commitment.",
+      caption_he: "ביטחון: 100. אוורור: 0. מכבדים את המחויבות.",
+      verdict: "CHAOS",
+      source: "Tunnel Cam Weekly",
+      sourceUrl: gs("Mateo Vidal Spain tunnel outfit"),
+      imageSeed: "vidal-spain-leather-fit",
+      minutesAgo: 42,
+    },
+    {
+      player: "Théo Laurent",
+      country: "France",
+      headline: "France's Théo Laurent debuted a €4,200 cropped chore coat at airport arrivals.",
+      headline_he: "תיאו לורן, צרפת, חשף מעיל ג'ורי קרופ ב-4,200 יורו בשדה התעופה.",
+      caption: "The coat is short. The abs are on display. This was not an accident.",
+      caption_he: "המעיל קצר. הבטן חשופה. זו לא הייתה טעות.",
+      verdict: "HIT",
+      source: "The Bench Report",
+      sourceUrl: gs("Theo Laurent France airport outfit"),
+      imageSeed: "laurent-france-cropped-coat",
+      minutesAgo: 87,
+    },
+    {
+      player: "Diogo Vaz",
+      country: "Portugal",
+      headline: "Portugal's Diogo Vaz wore three watches to a press conference. Three.",
+      headline_he: "דיוגו וז, פורטוגל, הגיע למסיבת עיתונאים עם שלושה שעונים. שלושה.",
+      caption: "One per timezone he plans to break hearts in.",
+      caption_he: "אחד לכל אזור זמן שהוא מתכנן לשבור בו לבבות.",
+      verdict: "HIT",
+      source: "Post-Match Panic",
+      sourceUrl: gs("Diogo Vaz Portugal watch press conference"),
+      imageSeed: "vaz-portugal-three-watches",
+      minutesAgo: 133,
+    },
+    {
+      player: "Rodrigo de Paz",
+      country: "Argentina",
+      headline: "Argentina's Rodrigo de Paz turned up in cargo shorts and a fur-lined coat.",
+      headline_he: "רודריגו דה פאס, ארגנטינה, הופיע במכנסי דגמ\"ח ומעיל פרווה.",
+      caption: "Nobody asked. Nobody survived either.",
+      caption_he: "אף אחד לא שאל. אף אחד גם לא שרד.",
+      verdict: "MISS",
+      source: "Off-Pitch Daily",
+      sourceUrl: gs("Rodrigo de Paz Argentina cargo shorts fur coat"),
+      imageSeed: "depaz-argentina-cargo-fur",
+      minutesAgo: 190,
+    },
+    {
+      player: "Sven de Vries",
+      country: "Netherlands",
+      headline: "Netherlands' Sven de Vries wore a mesh top to team dinner. Coach: 'no comment.'",
+      headline_he: "סבן דה פריס, הולנד, הגיע לארוחה עם חולצת רשת. המאמן: 'ללא תגובה.'",
+      caption: "The mesh has a plot. We are following it closely.",
+      caption_he: "לרשת הזאת יש עלילה. אנחנו עוקבות מקרוב.",
+      verdict: "HIT",
+      source: "Tunnel Cam Weekly",
+      sourceUrl: gs("Sven de Vries Netherlands mesh top"),
+      imageSeed: "devries-netherlands-mesh-top",
+      minutesAgo: 260,
+    },
+    {
+      player: "Cho Gue-sung",
+      country: "Korea",
+      headline: "Korea's Cho Gue-sung shows up in matching cream co-ord; the internet melts.",
+      headline_he: "צ'ו גיה-סונג, קוריאה, הופיע בחליפה תואמת בקרם; האינטרנט נמס.",
+      caption: "Business on top, statement on bottom. Also a haircut.",
+      caption_he: "עסקים למעלה, הצהרה למטה. וגם תספורת.",
+      verdict: "HIT",
+      source: "The Bench Report",
+      sourceUrl: gs("Cho Gue-sung Korea cream co-ord outfit"),
+      imageSeed: "cho-korea-cream-coord",
+      minutesAgo: 340,
+    },
+  ],
+  hotPlayers: [
+    {
+      name: "Théo Laurent",
+      country: "France",
+      role: "#10 · Attacking mid",
+      blurb: "France's chaos merchant with wet-look curls and a devastating left foot.",
+      blurb_he: "אמן הכאוס של צרפת עם תלתלים רטובים ורגל שמאל הרסנית.",
+      socialTeaser: "Instagram story: shirtless ice-bath video, no caption, 3 hours ago.",
+      socialTeaser_he: "סטורי באינסטגרם: אמבטיית קרח ללא חולצה, בלי טקסט, לפני 3 שעות.",
+      socialUrl: gw("Theo Laurent France instagram"),
+      imageSeed: "laurent-france-hot",
+      score: "9.7",
+      hoursAgo: 2,
+      isPlayingLive: false,
+      match: "vs Argentina",
+    },
+    {
+      name: "Mateo Vidal",
+      country: "Spain",
+      role: "Left winger",
+      blurb: "Spain's cheekbone situation is a public safety concern.",
+      blurb_he: "עצמות הלחיים של ספרד — הן סכנה ציבורית מובהקת.",
+      socialTeaser: "TikTok: dressing-room dance with the kit man, suspicious eye contact.",
+      socialTeaser_he: "טיקטוק: ריקוד בחדר הלבשה עם אחראי הציוד, מבטים חשודים.",
+      socialUrl: gw("Mateo Vidal Spain tiktok"),
+      imageSeed: "vidal-spain-hot",
+      score: "9.6",
+      hoursAgo: 6,
+      isPlayingLive: false,
+      match: "vs Germany",
+    },
+    {
+      name: "Diogo Vaz",
+      country: "Portugal",
+      role: "Right winger",
+      blurb: "Portugal's renaissance-painting bone structure. Weaponized.",
+      blurb_he: "מבנה עצמות מציור רנסנס מטעם פורטוגל. חמוש.",
+      socialTeaser: "Instagram: 'recovery day' post-swim photo, towel low, comments off.",
+      socialTeaser_he: "אינסטגרם: תמונה אחרי שחייה, מגבת נמוכה, תגובות סגורות.",
+      socialUrl: gw("Diogo Vaz Portugal instagram"),
+      imageSeed: "vaz-portugal-hot",
+      score: "9.5",
+      hoursAgo: 10,
+      isPlayingLive: false,
+      match: "vs Ghana",
+    },
+    {
+      name: "Cho Gue-sung",
+      country: "Korea",
+      role: "Striker",
+      blurb: "Korea's 6'2\" whose jawline trends on impact.",
+      blurb_he: "החלוץ של קוריאה, 1.88, קו לסת שעולה לטרנד ברגע.",
+      socialTeaser: "Instagram Live last night, tank top, casually cooking ramyeon.",
+      socialTeaser_he: "אינסטגרם לייב אתמול, גופייה, מבשל ראמיון ברוגע.",
+      socialUrl: gw("Cho Gue-sung Korea instagram"),
+      imageSeed: "cho-korea-hot",
+      score: "9.4",
+      hoursAgo: 14,
+      isPlayingLive: false,
+      match: "vs Uruguay",
+    },
+    {
+      name: "Sven de Vries",
+      country: "Netherlands",
+      role: "Center-back",
+      blurb: "Netherlands' 6'4\" ponytail with sad eyes and a devastating aerial game.",
+      blurb_he: "המגן של הולנד, 1.94, קוקו, עיניים עצובות ומשחק אווירי הרסני.",
+      socialTeaser: "Twitter: cryptic single-emoji tweet at 2am. Nine thousand replies.",
+      socialTeaser_he: "טוויטר: ציוץ עם אמוג'י אחד בשתיים לפנות בוקר. תשעת אלפים תגובות.",
+      socialUrl: gw("Sven de Vries Netherlands twitter"),
+      imageSeed: "devries-netherlands-hot",
+      score: "9.2",
+      hoursAgo: 20,
+      isPlayingLive: false,
+      match: "vs USA",
+    },
+    {
+      name: "Lucas Andrade",
+      country: "Brazil",
+      role: "Forward",
+      blurb: "Brazil's shampoo-ad smile. Scored two, memed by breakfast.",
+      blurb_he: "החיוך של ברזיל מפרסומת לשמפו. שני שערים, ומם עד ארוחת בוקר.",
+      socialTeaser: "Instagram reel: samba with grandma. Nobody is okay.",
+      socialTeaser_he: "ריל באינסטגרם: סמבה עם סבתא. אף אחד לא בסדר.",
+      socialUrl: gw("Lucas Andrade Brazil instagram"),
+      imageSeed: "andrade-brazil-hot",
+      score: "9.6",
+      hoursAgo: 30,
+      isPlayingLive: false,
+      match: "vs Serbia",
+    },
+    {
+      name: "Marko Perišić",
+      country: "Croatia",
+      role: "Wing-back",
+      blurb: "Croatia's forearm veins have their own fan account.",
+      blurb_he: "לוורידים באמות של קרואטיה יש חשבון מעריצים משלהם.",
+      socialTeaser: "Instagram: post-training photo, sleeves cut off, deliberately.",
+      socialTeaser_he: "אינסטגרם: תמונה אחרי אימון, שרוולים חתוכים, בכוונה.",
+      socialUrl: gw("Marko Perisic Croatia instagram"),
+      imageSeed: "perisic-croatia-hot",
+      score: "8.9",
+      hoursAgo: 40,
+      isPlayingLive: false,
+      match: "vs Japan",
+    },
+    {
+      name: "Rodrigo de Paz",
+      country: "Argentina",
+      role: "Central midfielder",
+      blurb: "Argentina's chaos-eyed midfielder. The scowl is deliberate.",
+      blurb_he: "הקשר עם המבט הכאוטי של ארגנטינה. הזעף מכוון.",
+      socialTeaser: "TikTok: locker-room 'get ready with me', someone in the mirror.",
+      socialTeaser_he: "טיקטוק: 'תתכוננו איתי' בחדר הלבשה, מישהו במראה.",
+      socialUrl: gw("Rodrigo de Paz Argentina tiktok"),
+      imageSeed: "depaz-argentina-hot",
+      score: "8.7",
+      hoursAgo: 55,
+      isPlayingLive: false,
+      match: "vs Poland",
+    },
+  ],
 };
 
 export const getMondialIntel = createServerFn({ method: "GET" }).handler(
@@ -268,6 +523,27 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
         sourceUrl:
           d.sourceUrl && d.sourceUrl.startsWith("http") ? d.sourceUrl : g(d.headline ?? "world cup"),
       }));
+      const gossip = ((parsed.gossip ?? []).slice(0, 6) as GossipItem[]).map((it) => ({
+        ...it,
+        imageSeed: slug(it.imageSeed || `${it.player ?? "player"}-${it.country ?? ""}`),
+        sourceUrl:
+          it.sourceUrl && it.sourceUrl.startsWith("http")
+            ? it.sourceUrl
+            : gs(`${it.player ?? ""} ${it.country ?? ""} outfit tunnel`),
+      }));
+      const hotPlayers = ((parsed.hotPlayers ?? []).slice(0, 8) as HotPlayerLive[])
+        .map((p) => ({
+          ...p,
+          imageSeed: slug(p.imageSeed || `${p.name ?? "player"}-${p.country ?? ""}`),
+          socialUrl:
+            p.socialUrl && p.socialUrl.startsWith("http")
+              ? p.socialUrl
+              : gw(`${p.name ?? ""} ${p.country ?? ""} instagram`),
+        }))
+        .sort((a, b) => {
+          if (a.isPlayingLive !== b.isPlayingLive) return a.isPlayingLive ? -1 : 1;
+          return (a.hoursAgo ?? 999) - (b.hoursAgo ?? 999);
+        });
       return {
         fetchedAt: now,
         polymarketOnline,
@@ -278,6 +554,8 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
         markets,
         winners,
         drops,
+        gossip: gossip.length ? gossip : FALLBACK.gossip,
+        hotPlayers: hotPlayers.length ? hotPlayers : FALLBACK.hotPlayers,
       };
     } catch {
       return { ...FALLBACK, fetchedAt: now, polymarketOnline };

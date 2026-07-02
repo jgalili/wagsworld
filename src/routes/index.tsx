@@ -177,6 +177,14 @@ const I18N = {
     compactIntel: "Quick Bets",
     compactWinners: "Top winner",
     compactDrops: "Juicy drops",
+    gossipTitle: "The Gossip Column",
+    gossipSub: "Airport fits, tunnel cams, questionable co-ords — updated live.",
+    verdictHit: "HIT",
+    verdictMiss: "MISS",
+    verdictChaos: "CHAOS",
+    socialsLabel: "From the socials",
+    playingNowBadge: "Playing right now",
+    editorialNote: "Editorial visual",
   },
   he: {
     title: "מדריך הנבדל(ת) האינטימי",
@@ -292,6 +300,14 @@ const I18N = {
     compactIntel: "הימורים מהירים",
     compactWinners: "המנצח הגדול",
     compactDrops: "חדשות עסיסיות",
+    gossipTitle: "טור הרכילות",
+    gossipSub: "לוקים בשדה תעופה, מצלמות מנהרה, קומבינציות חשודות — בזמן אמת.",
+    verdictHit: "פגיעה",
+    verdictMiss: "פספוס",
+    verdictChaos: "כאוס",
+    socialsLabel: "מהסושיאל",
+    playingNowBadge: "משחק כרגע",
+    editorialNote: "תמונת עריכה",
   },
 } as const;
 
@@ -361,14 +377,43 @@ function Index() {
   const playerImages = [player1, player2, player3, player4];
   const [playerFilter, setPlayerFilter] = useState<"week" | "last">("week");
   const [playerIdx, setPlayerIdx] = useState(0);
-  const filteredPlayers = t.players
-    .map((p, i) => ({ ...p, _img: playerImages[i % playerImages.length], _rank: i + 1 }))
-    .filter((p) => (playerFilter === "week" ? p.daysAgo <= 3 : p.daysAgo >= 4 && p.daysAgo <= 7));
+
+  // Prefer live AI-generated hot players; fall back to static list.
+  const livePlayersRaw = intel?.hotPlayers ?? [];
+  const livePlayersMapped = livePlayersRaw.map((p, i) => ({
+    country: p.country,
+    name: p.name,
+    blurb: isHe ? p.blurb_he : p.blurb,
+    score: p.score,
+    daysAgo: Math.max(0, Math.floor((p.hoursAgo ?? 0) / 24)),
+    match: p.match,
+    role: p.role,
+    socialTeaser: isHe ? p.socialTeaser_he : p.socialTeaser,
+    socialUrl: p.socialUrl,
+    isPlayingLive: p.isPlayingLive,
+    _img: `https://picsum.photos/seed/${encodeURIComponent(p.imageSeed || `${p.name}-${i}`)}/560/700`,
+    _rank: i + 1,
+  }));
+  const staticMapped = t.players.map((p, i) => ({
+    ...p,
+    role: "",
+    socialTeaser: "",
+    socialUrl: "",
+    isPlayingLive: false,
+    _img: playerImages[i % playerImages.length],
+    _rank: i + 1,
+  }));
+  const allPlayers = livePlayersMapped.length ? livePlayersMapped : staticMapped;
+  const filteredPlayers = allPlayers.filter((p) =>
+    playerFilter === "week" ? p.daysAgo <= 3 : p.daysAgo >= 2,
+  );
   const safeIdx = filteredPlayers.length ? playerIdx % filteredPlayers.length : 0;
   const current = filteredPlayers[safeIdx];
+  // Pick the top live-playing player from intel (if any) — used to override the live hottie card.
+  const livePlayingHottie = livePlayersRaw.find((p) => p.isPlayingLive);
   const goPrev = () => setPlayerIdx((i) => (i - 1 + filteredPlayers.length) % filteredPlayers.length);
   const goNext = () => setPlayerIdx((i) => (i + 1) % filteredPlayers.length);
-  useEffect(() => { setPlayerIdx(0); }, [playerFilter]);
+  useEffect(() => { setPlayerIdx(0); }, [playerFilter, livePlayersMapped.length]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -643,12 +688,23 @@ function Index() {
               <div className="mt-4 flex justify-between items-start gap-4">
                 <div>
                   <p className="font-mono text-[11px] uppercase text-primary font-bold">
-                    #{pad(current._rank)} // {current.country}
+                    #{pad(current._rank)} // {current.country}{current.role ? ` · ${current.role}` : ""}
                   </p>
                   <h3 className="text-2xl font-display italic">{current.name}</h3>
                   <p className="text-sm mt-2 max-w-[36ch] text-pretty text-muted-foreground">
                     {current.blurb}
                   </p>
+                  {current.socialTeaser && (
+                    <a
+                      href={current.socialUrl || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3 inline-block max-w-[38ch] text-[11px] italic text-primary/90 hover:text-primary transition-colors border-l-2 border-primary/50 pl-3 rtl:pl-0 rtl:pr-3 rtl:border-l-0 rtl:border-r-2"
+                    >
+                      <span className="font-mono not-italic text-[9px] uppercase tracking-widest mr-2 rtl:mr-0 rtl:ml-2 opacity-70">{t.socialsLabel}</span>
+                      {current.socialTeaser} ↗
+                    </a>
+                  )}
                 </div>
                 <div className="text-right rtl:text-left shrink-0">
                   <p className="font-mono text-[10px] uppercase text-muted-foreground">{t.hotness}</p>
@@ -819,8 +875,10 @@ function Index() {
           >
             <div className="relative aspect-[4/3] overflow-hidden">
               <img
-                src={player3}
-                alt={t.liveHottie.name}
+                src={livePlayingHottie
+                  ? `https://picsum.photos/seed/${encodeURIComponent(livePlayingHottie.imageSeed)}/600/450`
+                  : player3}
+                alt={livePlayingHottie?.name ?? t.liveHottie.name}
                 className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700 scale-105 hover:scale-100"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
@@ -834,14 +892,38 @@ function Index() {
                 </span>
               </div>
               <div className="absolute bottom-3 left-4 right-4 rtl:left-4 rtl:right-4">
-                <h3 className="font-display italic text-2xl leading-none">{t.liveHottie.name}</h3>
+                <h3 className="font-display italic text-2xl leading-none">
+                  {livePlayingHottie?.name ?? t.liveHottie.name}
+                </h3>
                 <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
-                  {t.liveHottie.meta}
+                  {livePlayingHottie
+                    ? `${livePlayingHottie.country} · ${livePlayingHottie.role} · ${livePlayingHottie.match}`
+                    : t.liveHottie.meta}
                 </p>
               </div>
             </div>
             <div className="p-5 space-y-4">
-              <p className="text-sm italic text-pretty">{t.liveHottie.tagline}</p>
+              <p className="text-sm italic text-pretty">
+                {livePlayingHottie
+                  ? (isHe ? livePlayingHottie.blurb_he : livePlayingHottie.blurb)
+                  : t.liveHottie.tagline}
+              </p>
+
+              {livePlayingHottie && (
+                <a
+                  href={livePlayingHottie.socialUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block p-3 rounded-sm border border-primary/40 bg-primary/5 hover:bg-primary/10 transition-colors"
+                >
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-primary font-bold mb-1">
+                    {t.socialsLabel} ↗
+                  </p>
+                  <p className="text-xs italic text-pretty">
+                    {isHe ? livePlayingHottie.socialTeaser_he : livePlayingHottie.socialTeaser}
+                  </p>
+                </a>
+              )}
 
               <div>
                 <p className="font-mono text-[10px] uppercase tracking-widest text-primary font-bold mb-2">
@@ -1053,6 +1135,88 @@ function Index() {
             {!intel && intelQuery.isLoading && (
               Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="h-36 rounded-sm border border-border bg-surface/40 animate-pulse" />
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Gossip Column — fashion hits, misses, chaos */}
+        <div className="mt-14 mb-14">
+          <div className="flex items-baseline justify-between border-b border-border pb-3 mb-6 gap-4 flex-wrap">
+            <div>
+              <h3 className={`text-2xl md:text-3xl tracking-tight shine-text ${isHe ? "font-hebrew italic font-semibold" : "font-display italic"}`}>
+                {t.gossipTitle}
+              </h3>
+              <p className="text-[11px] italic text-muted-foreground mt-1">{t.gossipSub}</p>
+            </div>
+            <p className="text-[10px] italic text-muted-foreground">
+              {intel ? `${t.lastFetchedLabel} · ${t.secondsAgo(intelAgo)}` : t.fetchingLabel}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {(intel?.gossip ?? []).map((it, i) => {
+              const headline = isHe ? it.headline_he : it.headline;
+              const caption = isHe ? it.caption_he : it.caption;
+              const verdictLabel =
+                it.verdict === "HIT" ? t.verdictHit : it.verdict === "MISS" ? t.verdictMiss : t.verdictChaos;
+              const verdictClass =
+                it.verdict === "HIT"
+                  ? "bg-success/15 text-success ring-success/40"
+                  : it.verdict === "MISS"
+                  ? "bg-primary/15 text-primary ring-primary/40"
+                  : "bg-foreground/10 text-foreground ring-foreground/30";
+              return (
+                <motion.a
+                  href={it.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  key={`${it.imageSeed}-${i}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.05 + i * 0.06, duration: 0.55 }}
+                  className="group relative block rounded-sm overflow-hidden border border-border bg-surface/60 backdrop-blur-md hover:-translate-y-1 hover:border-primary/50 transition-all"
+                >
+                  <div className="relative aspect-[4/5] overflow-hidden bg-muted">
+                    <img
+                      src={`https://picsum.photos/seed/${encodeURIComponent(it.imageSeed)}/500/620`}
+                      alt={it.player}
+                      loading="lazy"
+                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+                    <span className={`absolute top-3 left-3 rtl:left-auto rtl:right-3 font-mono text-[9px] uppercase tracking-widest px-2 py-1 rounded-full ring-1 ${verdictClass}`}>
+                      {verdictLabel}
+                    </span>
+                    <span className="absolute top-3 right-3 rtl:right-auto rtl:left-3 font-mono text-[8px] uppercase tracking-widest bg-background/60 backdrop-blur-sm px-2 py-1 rounded-full opacity-70">
+                      {t.editorialNote}
+                    </span>
+                    <div className="absolute bottom-3 left-4 right-4">
+                      <p className="font-mono text-[9px] uppercase tracking-widest text-primary/90 font-bold">
+                        {it.player} · {it.country}
+                      </p>
+                      <p className="text-sm font-bold leading-snug mt-1 text-pretty break-words">
+                        {headline}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="p-4 space-y-2">
+                    <p className="text-xs italic text-muted-foreground leading-relaxed break-words">
+                      &mdash; {caption}
+                    </p>
+                    <div className="flex justify-between items-center gap-2 pt-2 border-t border-border/60 font-mono text-[9px] uppercase tabular-nums text-muted-foreground">
+                      <span className="italic truncate group-hover:text-primary transition-colors">
+                        {it.source} ↗
+                      </span>
+                      <span className="whitespace-nowrap">{t.minutesAgoLabel(it.minutesAgo)}</span>
+                    </div>
+                  </div>
+                </motion.a>
+              );
+            })}
+            {!intel && intelQuery.isLoading && (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="aspect-[4/5] rounded-sm border border-border bg-surface/40 animate-pulse" />
               ))
             )}
           </div>
