@@ -688,12 +688,23 @@ function Index() {
               <div className="mt-4 flex justify-between items-start gap-4">
                 <div>
                   <p className="font-mono text-[11px] uppercase text-primary font-bold">
-                    #{pad(current._rank)} // {current.country}
+                    #{pad(current._rank)} // {current.country}{current.role ? ` · ${current.role}` : ""}
                   </p>
                   <h3 className="text-2xl font-display italic">{current.name}</h3>
                   <p className="text-sm mt-2 max-w-[36ch] text-pretty text-muted-foreground">
                     {current.blurb}
                   </p>
+                  {current.socialTeaser && (
+                    <a
+                      href={current.socialUrl || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3 inline-block max-w-[38ch] text-[11px] italic text-primary/90 hover:text-primary transition-colors border-l-2 border-primary/50 pl-3 rtl:pl-0 rtl:pr-3 rtl:border-l-0 rtl:border-r-2"
+                    >
+                      <span className="font-mono not-italic text-[9px] uppercase tracking-widest mr-2 rtl:mr-0 rtl:ml-2 opacity-70">{t.socialsLabel}</span>
+                      {current.socialTeaser} ↗
+                    </a>
+                  )}
                 </div>
                 <div className="text-right rtl:text-left shrink-0">
                   <p className="font-mono text-[10px] uppercase text-muted-foreground">{t.hotness}</p>
