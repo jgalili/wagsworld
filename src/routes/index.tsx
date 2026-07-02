@@ -874,8 +874,7 @@ function Index() {
               </p>
             </div>
           </motion.section>
-
-
+          )}
 
         </motion.div>
 
