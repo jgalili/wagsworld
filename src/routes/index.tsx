@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
 import { getMondialIntel } from "@/lib/mondial-intel.functions";
+import { getMondialLive, type LiveMatch } from "@/lib/mondial-live.functions";
 import player1 from "@/assets/player-1.jpg";
 import player2 from "@/assets/player-2.jpg";
 import player3 from "@/assets/player-3.jpg";
