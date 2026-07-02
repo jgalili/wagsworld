@@ -1140,6 +1140,88 @@ function Index() {
           </div>
         </div>
 
+        {/* Gossip Column — fashion hits, misses, chaos */}
+        <div className="mt-14 mb-14">
+          <div className="flex items-baseline justify-between border-b border-border pb-3 mb-6 gap-4 flex-wrap">
+            <div>
+              <h3 className={`text-2xl md:text-3xl tracking-tight shine-text ${isHe ? "font-hebrew italic font-semibold" : "font-display italic"}`}>
+                {t.gossipTitle}
+              </h3>
+              <p className="text-[11px] italic text-muted-foreground mt-1">{t.gossipSub}</p>
+            </div>
+            <p className="text-[10px] italic text-muted-foreground">
+              {intel ? `${t.lastFetchedLabel} · ${t.secondsAgo(intelAgo)}` : t.fetchingLabel}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {(intel?.gossip ?? []).map((it, i) => {
+              const headline = isHe ? it.headline_he : it.headline;
+              const caption = isHe ? it.caption_he : it.caption;
+              const verdictLabel =
+                it.verdict === "HIT" ? t.verdictHit : it.verdict === "MISS" ? t.verdictMiss : t.verdictChaos;
+              const verdictClass =
+                it.verdict === "HIT"
+                  ? "bg-success/15 text-success ring-success/40"
+                  : it.verdict === "MISS"
+                  ? "bg-primary/15 text-primary ring-primary/40"
+                  : "bg-foreground/10 text-foreground ring-foreground/30";
+              return (
+                <motion.a
+                  href={it.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  key={`${it.imageSeed}-${i}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.05 + i * 0.06, duration: 0.55 }}
+                  className="group relative block rounded-sm overflow-hidden border border-border bg-surface/60 backdrop-blur-md hover:-translate-y-1 hover:border-primary/50 transition-all"
+                >
+                  <div className="relative aspect-[4/5] overflow-hidden bg-muted">
+                    <img
+                      src={`https://picsum.photos/seed/${encodeURIComponent(it.imageSeed)}/500/620`}
+                      alt={it.player}
+                      loading="lazy"
+                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+                    <span className={`absolute top-3 left-3 rtl:left-auto rtl:right-3 font-mono text-[9px] uppercase tracking-widest px-2 py-1 rounded-full ring-1 ${verdictClass}`}>
+                      {verdictLabel}
+                    </span>
+                    <span className="absolute top-3 right-3 rtl:right-auto rtl:left-3 font-mono text-[8px] uppercase tracking-widest bg-background/60 backdrop-blur-sm px-2 py-1 rounded-full opacity-70">
+                      {t.editorialNote}
+                    </span>
+                    <div className="absolute bottom-3 left-4 right-4">
+                      <p className="font-mono text-[9px] uppercase tracking-widest text-primary/90 font-bold">
+                        {it.player} · {it.country}
+                      </p>
+                      <p className="text-sm font-bold leading-snug mt-1 text-pretty break-words">
+                        {headline}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="p-4 space-y-2">
+                    <p className="text-xs italic text-muted-foreground leading-relaxed break-words">
+                      &mdash; {caption}
+                    </p>
+                    <div className="flex justify-between items-center gap-2 pt-2 border-t border-border/60 font-mono text-[9px] uppercase tabular-nums text-muted-foreground">
+                      <span className="italic truncate group-hover:text-primary transition-colors">
+                        {it.source} ↗
+                      </span>
+                      <span className="whitespace-nowrap">{t.minutesAgoLabel(it.minutesAgo)}</span>
+                    </div>
+                  </div>
+                </motion.a>
+              );
+            })}
+            {!intel && intelQuery.isLoading && (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="aspect-[4/5] rounded-sm border border-border bg-surface/40 animate-pulse" />
+              ))
+            )}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* Prediction Markets */}
           <div className="lg:col-span-7 space-y-6">
