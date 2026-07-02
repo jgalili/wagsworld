@@ -318,9 +318,18 @@ function Index() {
   const t = I18N[lang];
   const isHe = lang === "he";
 
-  // Live match simulation
-  const live = useLiveMatch();
-  const liveAgo = useAgo(live.lastUpdated);
+  // Live World Cup data from ESPN — polled every 20s.
+  const liveQuery = useQuery({
+    queryKey: ["mondial-live"],
+    queryFn: () => getMondialLive(),
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
+    staleTime: 15_000,
+  });
+  const liveData = liveQuery.data;
+  const liveMatch: LiveMatch | undefined = liveData?.live[0];
+  const nextMatch: LiveMatch | undefined = liveData?.upcoming[0];
+  const liveAgo = useAgo(liveData?.generatedAt ?? Date.now());
 
   // Live betting intel + juicy news — refreshed on every mount
   const intelQuery = useQuery({
