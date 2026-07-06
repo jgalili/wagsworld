@@ -61,6 +61,18 @@ export type HotPlayerLive = {
   match: string; // e.g. "vs Croatia" or "LIVE vs Portugal"
 };
 
+export type MicroTip = { en: string; he: string };
+export type OddsRow = { team: string; team_he: string; pct: number };
+export type PeaceSlot = {
+  slot: string;
+  slot_he: string;
+  note: string;
+  note_he: string;
+  level: "critical" | "safe";
+};
+export type ProTip = { label: string; label_he: string; text: string; text_he: string };
+export type FakeLine = { en: string; he: string };
+
 export type MondialIntel = {
   fetchedAt: number;
   markets: BettingMarket[];
@@ -68,6 +80,11 @@ export type MondialIntel = {
   drops: JuicyDrop[];
   gossip: GossipItem[];
   hotPlayers: HotPlayerLive[];
+  microTips: MicroTip[];
+  odds: OddsRow[];
+  peaceForecast: PeaceSlot[];
+  proTips: ProTip[];
+  fakeLines: FakeLine[];
   totalWageredUsd: number;
   polymarketOnline: boolean;
 };
