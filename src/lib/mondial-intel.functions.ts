@@ -112,6 +112,7 @@ Return STRICT JSON, no prose, matching this TypeScript type:
 
 HARD RULES:
 - CRITICAL: Every mention of a player, coach, or captain MUST include the country in the same sentence. Never write "the captain" or "the coach" without naming the team. E.g. "Belgium's captain De Wilde", "Spain's coach Rojas". Same in Hebrew.
+- CRITICAL: Use REAL, well-known active 2026 World Cup players and coaches only. Examples of acceptable player names: Kylian Mbappé, Jude Bellingham, Vinícius Júnior, Lamine Yamal, Jamal Musiala, Erling Haaland (if Norway qualified), Rodrygo, Bukayo Saka, Pedri, Rodri, Federico Valverde, Achraf Hakimi, Son Heung-min, Cho Gue-sung, Luka Modrić, Christian Pulisic, Alphonso Davies, Jhon Durán, Nicolás Otamendi, Julián Álvarez, Lautaro Martínez, Bruno Fernandes, Rafael Leão, João Félix, Cristiano Ronaldo, Kevin De Bruyne, Romelu Lukaku, Virgil van Dijk, Cody Gakpo, Frenkie de Jong, Memphis Depay, Antoine Griezmann, Aurélien Tchouaméni, Ousmane Dembélé, Kim Min-jae, Takefusa Kubo, Wataru Endo, Timothy Weah, Weston McKennie, Gio Reyna, Ferran Torres, Nico Williams, Dani Olmo, Florian Wirtz, Kai Havertz, Serge Gnabry, Antonio Rüdiger, Josip Brekalo, Ismaila Sarr. Do NOT invent names like "Théo Laurent" or "Mateo Vidal".
 - "take"/"take_he": one sardonic sentence, max 80 chars, mention the team by name.
 - "wager"/"wager_he": 6–10 words, name specific team(s).
 - "vibe"/"vibe_he": one line about the bettor, max 60 chars.
