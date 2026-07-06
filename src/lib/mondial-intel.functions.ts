@@ -42,6 +42,7 @@ export type GossipItem = {
   source: string;
   sourceUrl: string;
   imageSeed: string; // used for picsum.photos seed
+  imageUrl?: string; // resolved server-side (Wikipedia thumbnail) when available
   minutesAgo: number;
 };
 
@@ -55,6 +56,7 @@ export type HotPlayerLive = {
   socialTeaser_he: string;
   socialUrl: string;
   imageSeed: string;
+  imageUrl?: string; // resolved server-side (Wikipedia thumbnail) when available
   score: string; // "9.4"
   hoursAgo: number; // how recent
   isPlayingLive: boolean; // whether they're from a team currently on the pitch
