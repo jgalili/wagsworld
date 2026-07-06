@@ -381,7 +381,7 @@ function Index() {
 
   // Live-updated content pulled from the AI feed (falls back to i18n static
   // arrays when the feed hasn't loaded yet).
-  const liveMicro: string[] = intel?.microTips?.length
+  const liveMicro: readonly string[] = intel?.microTips?.length
     ? intel.microTips.map((m) => (isHe ? m.he : m.en))
     : t.micro;
   const liveOdds = intel?.odds?.length
@@ -416,7 +416,7 @@ function Index() {
         text: isHe ? intel.proTips[1].text_he : intel.proTips[1].text,
       }
     : { label: t.proTip2, text: t.proTipText2 };
-  const liveFake = intel?.fakeLines?.length
+  const liveFake: readonly string[] = intel?.fakeLines?.length
     ? intel.fakeLines.map((f) => (isHe ? f.he : f.en))
     : t.fake;
 
