@@ -18,8 +18,11 @@ export const Route = createFileRoute("/")({
 const FINAL_DATE = new Date("2026-07-19T22:00:00Z");
 
 function useCountdown(target: Date) {
-  const [now, setNow] = useState(() => Date.now());
+  // Start at target so SSR + first client render both produce 00:00:00:00 and
+  // hydration matches; then tick on the client.
+  const [now, setNow] = useState<number>(() => target.getTime());
   useEffect(() => {
+    setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
@@ -52,11 +55,14 @@ function relativeWhen(iso: string, lang: Lang) {
 }
 
 function useAgo(ts: number) {
-  const [now, setNow] = useState(() => Date.now());
+  // Start at ts so SSR + first client render both produce 0s and hydration
+  // matches; then tick on the client.
+  const [now, setNow] = useState<number>(() => ts);
   useEffect(() => {
+    setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [ts]);
   return Math.max(0, Math.floor((now - ts) / 1000));
 }
 
