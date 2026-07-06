@@ -512,9 +512,94 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
       polymarketOnline = false;
     }
 
+    // Ground the AI in real ESPN data so it doesn't invent teams/players
+    // that are already eliminated.
+    const ymd = (d: Date) => {
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const day = String(d.getUTCDate()).padStart(2, "0");
+      return `${y}${m}${day}`;
+    };
+    const start = ymd(new Date(now - 5 * 86_400_000));
+    const end = ymd(new Date(now + 7 * 86_400_000));
+    let liveTeams: string[] = [];
+    let upcomingTeams: string[] = [];
+    let recentResults: string[] = [];
+    let eliminatedTeams: string[] = [];
+    try {
+      const scb = await fetch(
+        `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${start}-${end}`,
+        { signal: AbortSignal.timeout(5000) },
+      );
+      if (scb.ok) {
+        const data = (await scb.json()) as {
+          events?: Array<{
+            competitions: Array<{
+              status: { type: { state: string; completed?: boolean } };
+              competitors: Array<{
+                homeAway: "home" | "away";
+                score?: string;
+                winner?: boolean;
+                team: { displayName: string };
+              }>;
+            }>;
+            season?: { slug?: string };
+          }>;
+        };
+        const events = data.events ?? [];
+        for (const e of events) {
+          const c = e.competitions?.[0];
+          if (!c) continue;
+          const st = c.status.type.state;
+          const home = c.competitors.find((x) => x.homeAway === "home");
+          const away = c.competitors.find((x) => x.homeAway === "away");
+          if (!home || !away) continue;
+          const hn = home.team.displayName;
+          const an = away.team.displayName;
+          const slug = e.season?.slug ?? "";
+          const isKnockout = /round-of|quarter|semi|final/i.test(slug);
+          if (st === "in") {
+            liveTeams.push(hn, an);
+          } else if (st === "pre") {
+            upcomingTeams.push(hn, an);
+          } else if (st === "post") {
+            const hs = Number(home.score ?? "0");
+            const as = Number(away.score ?? "0");
+            recentResults.push(`${hn} ${hs}-${as} ${an}`);
+            if (isKnockout) {
+              if (home.winner === true) eliminatedTeams.push(an);
+              else if (away.winner === true) eliminatedTeams.push(hn);
+              else if (hs > as) eliminatedTeams.push(an);
+              else if (as > hs) eliminatedTeams.push(hn);
+            }
+          }
+        }
+      }
+    } catch {
+      // best-effort — fall through with empty context
+    }
+    liveTeams = Array.from(new Set(liveTeams));
+    upcomingTeams = Array.from(new Set(upcomingTeams));
+    eliminatedTeams = Array.from(new Set(eliminatedTeams));
+    const stillActive = Array.from(new Set([...liveTeams, ...upcomingTeams]));
+
     if (!apiKey) {
       return { ...FALLBACK, fetchedAt: now, polymarketOnline };
     }
+
+    const groundingBlock = `LIVE_CONTEXT (from ESPN, ${new Date(now).toISOString()}):
+- Teams playing RIGHT NOW: ${liveTeams.length ? liveTeams.join(", ") : "NONE"}
+- Teams with upcoming matches in next 7 days: ${upcomingTeams.length ? upcomingTeams.join(", ") : "NONE"}
+- Teams still active in tournament (union of above): ${stillActive.length ? stillActive.join(", ") : "UNKNOWN — no data"}
+- Teams already ELIMINATED (do NOT include in odds, hotPlayers, isPlayingLive): ${eliminatedTeams.length ? eliminatedTeams.join(", ") : "none known"}
+- Recent results (last 5 days): ${recentResults.length ? recentResults.join(" | ") : "none"}
+
+CRITICAL GROUNDING RULES:
+1. "odds" MUST only contain teams from stillActiveTeams. Never include an eliminatedTeam. If stillActiveTeams is UNKNOWN, use the top 5 favorites from the 2026 tournament.
+2. "hotPlayers" MUST only feature players from stillActiveTeams. Never from an eliminatedTeam.
+3. "isPlayingLive" MUST be true ONLY when the player's country is in liveTeams AND liveTeams is non-empty. Otherwise ALL isPlayingLive must be false.
+4. "microTips" MUST reference stillActiveTeams or the recent results above. Do NOT invent gossip about eliminated teams.
+5. "drops" and "gossip" MUST prioritise players/coaches from stillActiveTeams. Occasional post-elimination drama is allowed but MUST be phrased as past-tense ("after their exit", "since bowing out").`;
 
     try {
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -530,7 +615,7 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
             { role: "system", content: SYSTEM },
             {
               role: "user",
-              content: `Generate a fresh payload for right now. Seed: ${now}. Return only the JSON object.`,
+              content: `${groundingBlock}\n\nGenerate a fresh payload for right now. Seed: ${now}. Return only the JSON object.`,
             },
           ],
           response_format: { type: "json_object" },
