@@ -459,6 +459,35 @@ const FALLBACK: Omit<MondialIntel, "fetchedAt" | "polymarketOnline"> = {
       match: "vs Poland",
     },
   ],
+  microTips: [
+    { en: "Brazil's star winger dyed his hair again; use this to pretend you've been watching.", he: "הכוכב של ברזיל צבע שוב את השיער. תשתמשי בזה כדי להעמיד פנים שצפית." },
+    { en: "VAR is currently the enemy of joy. Nod and sigh when someone mentions 'replays'.", he: "ה-VAR הוא כרגע אויב השמחה. תהנהני ותאנחי כשמישהו מזכיר 'שידור חוזר'." },
+    { en: "France's main striker drinks herbal tea. Vital leverage for your next argument.", he: "החלוץ המרכזי של צרפת שותה תה צמחים. מנוף חיוני לוויכוח הבא שלך." },
+    { en: "Morocco is the sentimental favorite. Praising them is socially free real estate.", he: "מרוקו היא המועדפת הסנטימנטלית. לשבח אותה זה נדל\"ן חברתי חינם." },
+    { en: "England looked 'fine, actually'. Which, for England fans, counts as a crisis.", he: "אנגליה נראתה 'בסדר, האמת'. שזה, לאוהדי אנגליה, נחשב למשבר." },
+  ],
+  odds: [
+    { team: "France", team_he: "צרפת", pct: 24 },
+    { team: "Brazil", team_he: "ברזיל", pct: 21 },
+    { team: "Argentina", team_he: "ארגנטינה", pct: 18 },
+    { team: "England", team_he: "אנגליה", pct: 14 },
+    { team: "Spain", team_he: "ספרד", pct: 11 },
+  ],
+  peaceForecast: [
+    { slot: "Tues 18:00", slot_he: "שלישי 18:00", note: "Likely shouting & spilled beer", note_he: "צעקות ובירה שנשפכת", level: "critical" },
+    { slot: "Wed 14:00", slot_he: "רביעי 14:00", note: "Productive apathy", note_he: "אדישות פרודוקטיבית", level: "safe" },
+    { slot: "Thu 20:00", slot_he: "חמישי 20:00", note: "Semi-final: brace for tears", note_he: "חצי גמר: היכוני לדמעות", level: "critical" },
+    { slot: "Fri 12:00", slot_he: "שישי 12:00", note: "No matches. Actual daylight.", note_he: "אין משחקים. אור יום ממשי.", level: "safe" },
+  ],
+  proTips: [
+    { label: "Pro Survival Tip", label_he: "טיפ הישרדות מקצועי", text: "\"When they say 'False Nine', just nod. Don't ask what it means. Nobody actually knows.\"", text_he: "\"כשאומרים 'תשע כוזב', פשוט תהנהני. אל תשאלי מה זה. אף אחד באמת לא יודע.\"" },
+    { label: "Pro Survival Tip #2", label_he: "טיפ הישרדות מקצועי #2", text: "\"If he mentions 'xG' three times in one sentence, pour yourself a glass of wine and tune out.\"", text_he: "\"אם הוא מזכיר 'xG' שלוש פעמים במשפט אחד, מזגי לך כוס יין ותנתקי.\"" },
+  ],
+  fakeLines: [
+    { en: "\"Their midfield press is a mess.\"", he: "\"הלחיצה שלהם בקישור בלגן מוחלט.\"" },
+    { en: "\"Honestly? Give me a proper number nine.\"", he: "\"בכנות? תני לי חלוץ מספר תשע אמיתי.\"" },
+    { en: "\"You can't defend that with three at the back.\"", he: "\"אי אפשר להתגונן עם שלושה מאחור.\"" },
+  ],
 };
 
 export const getMondialIntel = createServerFn({ method: "GET" }).handler(
