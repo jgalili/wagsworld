@@ -595,6 +595,16 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
           if (a.isPlayingLive !== b.isPlayingLive) return a.isPlayingLive ? -1 : 1;
           return (a.hoursAgo ?? 999) - (b.hoursAgo ?? 999);
         });
+      const microTips = ((parsed.microTips ?? []) as MicroTip[])
+        .filter((m) => m && m.en && m.he).slice(0, 5);
+      const odds = ((parsed.odds ?? []) as OddsRow[])
+        .filter((o) => o && o.team && typeof o.pct === "number").slice(0, 5);
+      const peaceForecast = ((parsed.peaceForecast ?? []) as PeaceSlot[])
+        .filter((p) => p && p.slot && p.note).slice(0, 4);
+      const proTips = ((parsed.proTips ?? []) as ProTip[])
+        .filter((p) => p && p.text && p.text_he).slice(0, 2);
+      const fakeLines = ((parsed.fakeLines ?? []) as FakeLine[])
+        .filter((f) => f && f.en && f.he).slice(0, 3);
       return {
         fetchedAt: now,
         polymarketOnline,
@@ -607,6 +617,11 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
         drops,
         gossip: gossip.length ? gossip : FALLBACK.gossip,
         hotPlayers: hotPlayers.length ? hotPlayers : FALLBACK.hotPlayers,
+        microTips: microTips.length ? microTips : FALLBACK.microTips,
+        odds: odds.length ? odds : FALLBACK.odds,
+        peaceForecast: peaceForecast.length ? peaceForecast : FALLBACK.peaceForecast,
+        proTips: proTips.length === 2 ? proTips : FALLBACK.proTips,
+        fakeLines: fakeLines.length ? fakeLines : FALLBACK.fakeLines,
       };
     } catch {
       return { ...FALLBACK, fetchedAt: now, polymarketOnline };
