@@ -42,6 +42,7 @@ export type GossipItem = {
   source: string;
   sourceUrl: string;
   imageSeed: string; // used for picsum.photos seed
+  imageUrl?: string; // resolved server-side (Wikipedia thumbnail) when available
   minutesAgo: number;
 };
 
@@ -55,6 +56,7 @@ export type HotPlayerLive = {
   socialTeaser_he: string;
   socialUrl: string;
   imageSeed: string;
+  imageUrl?: string; // resolved server-side (Wikipedia thumbnail) when available
   score: string; // "9.4"
   hoursAgo: number; // how recent
   isPlayingLive: boolean; // whether they're from a team currently on the pitch
@@ -110,6 +112,7 @@ Return STRICT JSON, no prose, matching this TypeScript type:
 
 HARD RULES:
 - CRITICAL: Every mention of a player, coach, or captain MUST include the country in the same sentence. Never write "the captain" or "the coach" without naming the team. E.g. "Belgium's captain De Wilde", "Spain's coach Rojas". Same in Hebrew.
+- CRITICAL: Use REAL, well-known active 2026 World Cup players and coaches only. Examples of acceptable player names: Kylian Mbappé, Jude Bellingham, Vinícius Júnior, Lamine Yamal, Jamal Musiala, Erling Haaland (if Norway qualified), Rodrygo, Bukayo Saka, Pedri, Rodri, Federico Valverde, Achraf Hakimi, Son Heung-min, Cho Gue-sung, Luka Modrić, Christian Pulisic, Alphonso Davies, Jhon Durán, Nicolás Otamendi, Julián Álvarez, Lautaro Martínez, Bruno Fernandes, Rafael Leão, João Félix, Cristiano Ronaldo, Kevin De Bruyne, Romelu Lukaku, Virgil van Dijk, Cody Gakpo, Frenkie de Jong, Memphis Depay, Antoine Griezmann, Aurélien Tchouaméni, Ousmane Dembélé, Kim Min-jae, Takefusa Kubo, Wataru Endo, Timothy Weah, Weston McKennie, Gio Reyna, Ferran Torres, Nico Williams, Dani Olmo, Florian Wirtz, Kai Havertz, Serge Gnabry, Antonio Rüdiger, Josip Brekalo, Ismaila Sarr. Do NOT invent names like "Théo Laurent" or "Mateo Vidal".
 - "take"/"take_he": one sardonic sentence, max 80 chars, mention the team by name.
 - "wager"/"wager_he": 6–10 words, name specific team(s).
 - "vibe"/"vibe_he": one line about the bettor, max 60 chars.
@@ -512,9 +515,94 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
       polymarketOnline = false;
     }
 
+    // Ground the AI in real ESPN data so it doesn't invent teams/players
+    // that are already eliminated.
+    const ymd = (d: Date) => {
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const day = String(d.getUTCDate()).padStart(2, "0");
+      return `${y}${m}${day}`;
+    };
+    const start = ymd(new Date(now - 5 * 86_400_000));
+    const end = ymd(new Date(now + 7 * 86_400_000));
+    let liveTeams: string[] = [];
+    let upcomingTeams: string[] = [];
+    let recentResults: string[] = [];
+    let eliminatedTeams: string[] = [];
+    try {
+      const scb = await fetch(
+        `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${start}-${end}`,
+        { signal: AbortSignal.timeout(5000) },
+      );
+      if (scb.ok) {
+        const data = (await scb.json()) as {
+          events?: Array<{
+            competitions: Array<{
+              status: { type: { state: string; completed?: boolean } };
+              competitors: Array<{
+                homeAway: "home" | "away";
+                score?: string;
+                winner?: boolean;
+                team: { displayName: string };
+              }>;
+            }>;
+            season?: { slug?: string };
+          }>;
+        };
+        const events = data.events ?? [];
+        for (const e of events) {
+          const c = e.competitions?.[0];
+          if (!c) continue;
+          const st = c.status.type.state;
+          const home = c.competitors.find((x) => x.homeAway === "home");
+          const away = c.competitors.find((x) => x.homeAway === "away");
+          if (!home || !away) continue;
+          const hn = home.team.displayName;
+          const an = away.team.displayName;
+          const slug = e.season?.slug ?? "";
+          const isKnockout = /round-of|quarter|semi|final/i.test(slug);
+          if (st === "in") {
+            liveTeams.push(hn, an);
+          } else if (st === "pre") {
+            upcomingTeams.push(hn, an);
+          } else if (st === "post") {
+            const hs = Number(home.score ?? "0");
+            const as = Number(away.score ?? "0");
+            recentResults.push(`${hn} ${hs}-${as} ${an}`);
+            if (isKnockout) {
+              if (home.winner === true) eliminatedTeams.push(an);
+              else if (away.winner === true) eliminatedTeams.push(hn);
+              else if (hs > as) eliminatedTeams.push(an);
+              else if (as > hs) eliminatedTeams.push(hn);
+            }
+          }
+        }
+      }
+    } catch {
+      // best-effort — fall through with empty context
+    }
+    liveTeams = Array.from(new Set(liveTeams));
+    upcomingTeams = Array.from(new Set(upcomingTeams));
+    eliminatedTeams = Array.from(new Set(eliminatedTeams));
+    const stillActive = Array.from(new Set([...liveTeams, ...upcomingTeams]));
+
     if (!apiKey) {
       return { ...FALLBACK, fetchedAt: now, polymarketOnline };
     }
+
+    const groundingBlock = `LIVE_CONTEXT (from ESPN, ${new Date(now).toISOString()}):
+- Teams playing RIGHT NOW: ${liveTeams.length ? liveTeams.join(", ") : "NONE"}
+- Teams with upcoming matches in next 7 days: ${upcomingTeams.length ? upcomingTeams.join(", ") : "NONE"}
+- Teams still active in tournament (union of above): ${stillActive.length ? stillActive.join(", ") : "UNKNOWN — no data"}
+- Teams already ELIMINATED (do NOT include in odds, hotPlayers, isPlayingLive): ${eliminatedTeams.length ? eliminatedTeams.join(", ") : "none known"}
+- Recent results (last 5 days): ${recentResults.length ? recentResults.join(" | ") : "none"}
+
+CRITICAL GROUNDING RULES:
+1. "odds" MUST only contain teams from stillActiveTeams. Never include an eliminatedTeam. If stillActiveTeams is UNKNOWN, use the top 5 favorites from the 2026 tournament.
+2. "hotPlayers" MUST only feature players from stillActiveTeams. Never from an eliminatedTeam.
+3. "isPlayingLive" MUST be true ONLY when the player's country is in liveTeams AND liveTeams is non-empty. Otherwise ALL isPlayingLive must be false.
+4. "microTips" MUST reference stillActiveTeams or the recent results above. Do NOT invent gossip about eliminated teams.
+5. "drops" and "gossip" MUST prioritise players/coaches from stillActiveTeams. Occasional post-elimination drama is allowed but MUST be phrased as past-tense ("after their exit", "since bowing out").`;
 
     try {
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -530,7 +618,7 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
             { role: "system", content: SYSTEM },
             {
               role: "user",
-              content: `Generate a fresh payload for right now. Seed: ${now}. Return only the JSON object.`,
+              content: `${groundingBlock}\n\nGenerate a fresh payload for right now. Seed: ${now}. Return only the JSON object.`,
             },
           ],
           response_format: { type: "json_object" },
@@ -574,15 +662,14 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
         sourceUrl:
           d.sourceUrl && d.sourceUrl.startsWith("http") ? d.sourceUrl : g(d.headline ?? "world cup"),
       }));
-      const gossip = ((parsed.gossip ?? []).slice(0, 6) as GossipItem[]).map((it) => ({
-        ...it,
-        imageSeed: slug(it.imageSeed || `${it.player ?? "player"}-${it.country ?? ""}`),
-        sourceUrl:
-          it.sourceUrl && it.sourceUrl.startsWith("http")
-            ? it.sourceUrl
-            : gs(`${it.player ?? ""} ${it.country ?? ""} outfit tunnel`),
-      }));
-      const hotPlayers = ((parsed.hotPlayers ?? []).slice(0, 8) as HotPlayerLive[])
+      const eliminatedSet = new Set(eliminatedTeams.map((t) => t.toLowerCase()));
+      const liveSet = new Set(liveTeams.map((t) => t.toLowerCase()));
+      const activeSet = new Set(stillActive.map((t) => t.toLowerCase()));
+      const isEliminated = (country?: string) =>
+        !!country && eliminatedSet.has(country.toLowerCase());
+
+      const hotPlayersFiltered = ((parsed.hotPlayers ?? []).slice(0, 12) as HotPlayerLive[])
+        .filter((p) => p && p.name && !isEliminated(p.country))
         .map((p) => ({
           ...p,
           imageSeed: slug(p.imageSeed || `${p.name ?? "player"}-${p.country ?? ""}`),
@@ -590,21 +677,81 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
             p.socialUrl && p.socialUrl.startsWith("http")
               ? p.socialUrl
               : gw(`${p.name ?? ""} ${p.country ?? ""} instagram`),
+          // Force correct isPlayingLive: only true when that country is actually on the pitch RIGHT NOW.
+          isPlayingLive: !!p.isPlayingLive && liveSet.has((p.country ?? "").toLowerCase()),
         }))
+        .slice(0, 8)
         .sort((a, b) => {
           if (a.isPlayingLive !== b.isPlayingLive) return a.isPlayingLive ? -1 : 1;
           return (a.hoursAgo ?? 999) - (b.hoursAgo ?? 999);
         });
+
+      // Resolve real player photos from Wikipedia in parallel.
+      const wikiThumb = async (name: string): Promise<string | undefined> => {
+        if (!name) return undefined;
+        try {
+          const r = await fetch(
+            `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name.replace(/\s+/g, "_"))}`,
+            { signal: AbortSignal.timeout(2500), headers: { accept: "application/json" } },
+          );
+          if (!r.ok) return undefined;
+          const j = (await r.json()) as {
+            originalimage?: { source?: string };
+            thumbnail?: { source?: string };
+            type?: string;
+          };
+          if (j.type === "disambiguation") return undefined;
+          return j.originalimage?.source ?? j.thumbnail?.source;
+        } catch {
+          return undefined;
+        }
+      };
+      const hotPlayers = await Promise.all(
+        hotPlayersFiltered.map(async (p) => ({ ...p, imageUrl: await wikiThumb(p.name) })),
+      );
+
+      const gossipFiltered = ((parsed.gossip ?? []).slice(0, 8) as GossipItem[])
+        .filter((it) => it && it.player && !isEliminated(it.country))
+        .map((it) => ({
+          ...it,
+          imageSeed: slug(it.imageSeed || `${it.player ?? "player"}-${it.country ?? ""}`),
+          sourceUrl:
+            it.sourceUrl && it.sourceUrl.startsWith("http")
+              ? it.sourceUrl
+              : gs(`${it.player ?? ""} ${it.country ?? ""} outfit tunnel`),
+        }))
+        .slice(0, 6);
+      const gossipWithImages = await Promise.all(
+        gossipFiltered.map(async (it) => ({ ...it, imageUrl: await wikiThumb(it.player) })),
+      );
+
       const microTips = ((parsed.microTips ?? []) as MicroTip[])
         .filter((m) => m && m.en && m.he).slice(0, 5);
-      const odds = ((parsed.odds ?? []) as OddsRow[])
-        .filter((o) => o && o.team && typeof o.pct === "number").slice(0, 5);
+      let odds = ((parsed.odds ?? []) as OddsRow[])
+        .filter(
+          (o) =>
+            o &&
+            o.team &&
+            typeof o.pct === "number" &&
+            !eliminatedSet.has(o.team.toLowerCase()),
+        )
+        .slice(0, 5);
+      // If we know the active set, also drop odds rows for teams that aren't in it (extra safety).
+      if (activeSet.size > 0) {
+        const filtered = odds.filter((o) => activeSet.has(o.team.toLowerCase()));
+        if (filtered.length >= 3) odds = filtered;
+      }
       const peaceForecast = ((parsed.peaceForecast ?? []) as PeaceSlot[])
         .filter((p) => p && p.slot && p.note).slice(0, 4);
       const proTips = ((parsed.proTips ?? []) as ProTip[])
         .filter((p) => p && p.text && p.text_he).slice(0, 2);
       const fakeLines = ((parsed.fakeLines ?? []) as FakeLine[])
         .filter((f) => f && f.en && f.he).slice(0, 3);
+
+      // Fallback odds: strip any eliminated teams from the built-in list too.
+      const safeFallbackOdds = FALLBACK.odds.filter(
+        (o) => !eliminatedSet.has(o.team.toLowerCase()),
+      );
       return {
         fetchedAt: now,
         polymarketOnline,
@@ -615,10 +762,10 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
         markets,
         winners,
         drops,
-        gossip: gossip.length ? gossip : FALLBACK.gossip,
+        gossip: gossipWithImages.length ? gossipWithImages : FALLBACK.gossip,
         hotPlayers: hotPlayers.length ? hotPlayers : FALLBACK.hotPlayers,
         microTips: microTips.length ? microTips : FALLBACK.microTips,
-        odds: odds.length ? odds : FALLBACK.odds,
+        odds: odds.length ? odds : (safeFallbackOdds.length ? safeFallbackOdds : FALLBACK.odds),
         peaceForecast: peaceForecast.length ? peaceForecast : FALLBACK.peaceForecast,
         proTips: proTips.length === 2 ? proTips : FALLBACK.proTips,
         fakeLines: fakeLines.length ? fakeLines : FALLBACK.fakeLines,

@@ -438,7 +438,12 @@ function Index() {
     socialTeaser: isHe ? p.socialTeaser_he : p.socialTeaser,
     socialUrl: p.socialUrl,
     isPlayingLive: p.isPlayingLive,
-    _img: `https://picsum.photos/seed/${encodeURIComponent(p.imageSeed || `${p.name}-${i}`)}/560/700`,
+    _img:
+      p.imageUrl ||
+      `https://commons.wikimedia.org/w/index.php?search=${encodeURIComponent(
+        p.name + " footballer",
+      )}&title=Special:MediaSearch&go=Go&type=image`,
+    _hasRealImg: !!p.imageUrl,
     _rank: i + 1,
   }));
   const staticMapped = t.players.map((p, i) => ({
@@ -448,19 +453,32 @@ function Index() {
     socialUrl: "",
     isPlayingLive: false,
     _img: playerImages[i % playerImages.length],
+    _hasRealImg: true,
     _rank: i + 1,
   }));
-  const allPlayers = livePlayersMapped.length ? livePlayersMapped : staticMapped;
+  // Only use AI players that actually resolved to a real photo. Otherwise
+  // fall back to the curated static list — no more scenery placeholders.
+  const livePlayersWithImgs = livePlayersMapped.filter((p) => p._hasRealImg);
+  const allPlayers = livePlayersWithImgs.length ? livePlayersWithImgs : staticMapped;
   const filteredPlayers = allPlayers.filter((p) =>
     playerFilter === "week" ? p.daysAgo <= 3 : p.daysAgo >= 2,
   );
   const safeIdx = filteredPlayers.length ? playerIdx % filteredPlayers.length : 0;
   const current = filteredPlayers[safeIdx];
-  // Pick the top live-playing player from intel (if any) — used to override the live hottie card.
-  const livePlayingHottie = livePlayersRaw.find((p) => p.isPlayingLive);
+  // The "Hottie on the pitch" card only makes sense when a match is actually
+  // live AND one of the AI-supplied hot players belongs to one of the two
+  // teams currently on the pitch. Otherwise we hide the card entirely.
+  const livePlayingHottie = liveMatch
+    ? livePlayersRaw.find(
+        (p) =>
+          p.isPlayingLive &&
+          (p.country?.toLowerCase() === liveMatch.home.name.toLowerCase() ||
+            p.country?.toLowerCase() === liveMatch.away.name.toLowerCase()),
+      )
+    : undefined;
   const goPrev = () => setPlayerIdx((i) => (i - 1 + filteredPlayers.length) % filteredPlayers.length);
   const goNext = () => setPlayerIdx((i) => (i + 1) % filteredPlayers.length);
-  useEffect(() => { setPlayerIdx(0); }, [playerFilter, livePlayersMapped.length]);
+  useEffect(() => { setPlayerIdx(0); }, [playerFilter, allPlayers.length]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -906,8 +924,9 @@ function Index() {
             </motion.section>
           )}
 
-          {/* Live Hottie On The Pitch — only when a match is actually LIVE */}
-          {liveMatch && (
+          {/* Live Hottie On The Pitch — only when a match is LIVE AND we have
+              a real player from one of the two teams currently on the pitch. */}
+          {liveMatch && livePlayingHottie && livePlayingHottie.imageUrl && (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -916,10 +935,8 @@ function Index() {
           >
             <div className="relative aspect-[4/3] overflow-hidden">
               <img
-                src={livePlayingHottie
-                  ? `https://picsum.photos/seed/${encodeURIComponent(livePlayingHottie.imageSeed)}/600/450`
-                  : player3}
-                alt={livePlayingHottie?.name ?? t.liveHottie.name}
+                src={livePlayingHottie.imageUrl}
+                alt={livePlayingHottie.name}
                 className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700 scale-105 hover:scale-100"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
@@ -1195,7 +1212,7 @@ function Index() {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {(intel?.gossip ?? []).map((it, i) => {
+            {(intel?.gossip ?? []).filter((it) => it.imageUrl).map((it, i) => {
               const headline = isHe ? it.headline_he : it.headline;
               const caption = isHe ? it.caption_he : it.caption;
               const verdictLabel =
@@ -1220,7 +1237,7 @@ function Index() {
                 >
                   <div className="relative aspect-[4/5] overflow-hidden bg-muted">
                     <img
-                      src={`https://picsum.photos/seed/${encodeURIComponent(it.imageSeed)}/500/620`}
+                      src={it.imageUrl}
                       alt={it.player}
                       loading="lazy"
                       className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100"
