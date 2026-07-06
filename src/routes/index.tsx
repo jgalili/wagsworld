@@ -379,24 +379,48 @@ function Index() {
   const intel = intelQuery.data;
   const intelAgo = useAgo(intel?.fetchedAt ?? Date.now());
 
-  // Live-updated content pulled from the AI feed (falls back to i18n static
-  // arrays when the feed hasn't loaded yet).
+  const liveTeamNames = liveData
+    ? Array.from(
+        new Set(
+          [...liveData.live, ...liveData.upcoming]
+            .flatMap((m) => [m.home.name, m.away.name])
+            .filter((team) => !/winner|round of|tbd/i.test(team)),
+        ),
+      )
+    : [];
+  const liveMicroFallback: readonly string[] = liveMatch
+    ? [
+        `${liveMatch.home.name} vs ${liveMatch.away.name} is live at ${liveMatch.home.score || 0}-${liveMatch.away.score || 0}. That is the actual news.`,
+        nextMatch
+          ? `Next: ${nextMatch.home.name} vs ${nextMatch.away.name}. No eliminated-team cosplay required.`
+          : "Next fixture is still loading from ESPN. Do not trust recycled tournament gossip.",
+      ]
+    : nextMatch
+      ? [
+          `Next: ${nextMatch.home.name} vs ${nextMatch.away.name} at ${fmtKickoff(nextMatch.kickoffISO, lang)}.`,
+          liveData?.recent[0]
+            ? `${liveData.recent[0].home.name} ${liveData.recent[0].home.score}-${liveData.recent[0].away.score} ${liveData.recent[0].away.name} is finished. Update all takes accordingly.`
+            : "Live tournament feed is loading. Stale Brazil hair news has been removed.",
+        ]
+      : ["Live tournament feed is loading. Stale Brazil hair news has been removed."];
+  const liveOddsFallback = liveTeamNames.slice(0, 5).map((team, i) => ({
+    team,
+    label: team,
+    pct: Math.max(6, 24 - i * 3),
+  }));
+
+  // Live-updated content pulled from grounded server data. Never fall back to
+  // old hard-coded teams here; showing nothing/loading is better than stale.
   const liveMicro: readonly string[] = intel?.microTips?.length
     ? intel.microTips.map((m) => (isHe ? m.he : m.en))
-    : t.micro;
+    : liveMicroFallback;
   const liveOdds = intel?.odds?.length
     ? intel.odds.map((o) => ({
         team: o.team,
         label: isHe ? o.team_he || o.team : o.team,
         pct: o.pct,
       }))
-    : [
-        { team: "France", label: t.teams.France, pct: 24 },
-        { team: "Brazil", label: t.teams.Brazil, pct: 21 },
-        { team: "Argentina", label: t.teams.Argentina, pct: 18 },
-        { team: "England", label: t.teams.England, pct: 14 },
-        { team: "Spain", label: t.teams.Spain, pct: 11 },
-      ];
+    : liveOddsFallback;
   const livePeace = intel?.peaceForecast?.length
     ? intel.peaceForecast.map((p) => ({
         slot: isHe ? p.slot_he || p.slot : p.slot,
@@ -459,7 +483,7 @@ function Index() {
   // Only use AI players that actually resolved to a real photo. Otherwise
   // fall back to the curated static list — no more scenery placeholders.
   const livePlayersWithImgs = livePlayersMapped.filter((p) => p._hasRealImg);
-  const allPlayers = livePlayersWithImgs.length ? livePlayersWithImgs : staticMapped;
+  const allPlayers = livePlayersWithImgs.length ? livePlayersWithImgs : [];
   const filteredPlayers = allPlayers.filter((p) =>
     playerFilter === "week" ? p.daysAgo <= 3 : p.daysAgo >= 2,
   );
