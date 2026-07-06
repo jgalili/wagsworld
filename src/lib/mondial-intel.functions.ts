@@ -1044,16 +1044,17 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
     const groundedMicroTips = buildLiveMicroTips(liveMatches, upcomingMatches, recentMatches);
     const groundedOdds = buildLiveOdds(liveMatches, upcomingMatches, eliminatedTeams);
     const groundedHotPlayers = await attachHotPlayerImages(buildLiveHotPlayers(liveMatches, upcomingMatches));
+    const liveGroundedFallback = (): MondialIntel => ({
+      ...FALLBACK,
+      fetchedAt: now,
+      polymarketOnline,
+      microTips: groundedMicroTips,
+      odds: groundedOdds,
+      hotPlayers: groundedHotPlayers,
+    });
 
     if (!apiKey) {
-      return {
-        ...FALLBACK,
-        fetchedAt: now,
-        polymarketOnline,
-        microTips: groundedMicroTips.length ? groundedMicroTips : [],
-        odds: groundedOdds,
-        hotPlayers: groundedHotPlayers,
-      };
+      return liveGroundedFallback();
     }
 
     const groundingBlock = `LIVE_CONTEXT (from ESPN, ${new Date(now).toISOString()}):
@@ -1093,14 +1094,14 @@ CRITICAL GROUNDING RULES:
       });
 
       if (!res.ok) {
-        return { ...FALLBACK, fetchedAt: now, polymarketOnline };
+        return liveGroundedFallback();
       }
 
       const json = (await res.json()) as {
         choices?: Array<{ message?: { content?: string } }>;
       };
       const content = json.choices?.[0]?.message?.content;
-      if (!content) return { ...FALLBACK, fetchedAt: now, polymarketOnline };
+      if (!content) return liveGroundedFallback();
 
       const parsed = JSON.parse(content) as Partial<MondialIntel>;
       if (
@@ -1108,7 +1109,7 @@ CRITICAL GROUNDING RULES:
         !Array.isArray(parsed.winners) ||
         !Array.isArray(parsed.drops)
       ) {
-        return { ...FALLBACK, fetchedAt: now, polymarketOnline };
+        return liveGroundedFallback();
       }
 
       // Normalize: guarantee URLs even when the model omits them.
@@ -1194,10 +1195,6 @@ CRITICAL GROUNDING RULES:
       const fakeLines = ((parsed.fakeLines ?? []) as FakeLine[])
         .filter((f) => f && f.en && f.he).slice(0, 3);
 
-      // Fallback odds: strip any eliminated teams from the built-in list too.
-      const safeFallbackOdds = FALLBACK.odds.filter(
-        (o) => !eliminatedSet.has(o.team.toLowerCase()),
-      );
       const safeAiHotPlayers = hotPlayers.filter((p) => p.imageUrl);
       return {
         fetchedAt: now,
@@ -1218,19 +1215,7 @@ CRITICAL GROUNDING RULES:
         fakeLines: fakeLines.length ? fakeLines : FALLBACK.fakeLines,
       };
     } catch {
-      return {
-        ...FALLBACK,
-        fetchedAt: now,
-        polymarketOnline,
-        microTips: [
-          {
-            en: "Live match feed is recalibrating; ignore any Brazil title takes until the next refresh.",
-            he: "פיד המשחקים מתאפס; להתעלם מכל תחזית זכייה על ברזיל עד הרענון הבא.",
-          },
-        ],
-        odds: [],
-        hotPlayers: [],
-      };
+      return liveGroundedFallback();
     }
   },
 );
