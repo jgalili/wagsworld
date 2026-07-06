@@ -1198,6 +1198,7 @@ CRITICAL GROUNDING RULES:
       const safeFallbackOdds = FALLBACK.odds.filter(
         (o) => !eliminatedSet.has(o.team.toLowerCase()),
       );
+      const safeAiHotPlayers = hotPlayers.filter((p) => p.imageUrl);
       return {
         fetchedAt: now,
         polymarketOnline,
@@ -1209,7 +1210,7 @@ CRITICAL GROUNDING RULES:
         winners,
         drops,
         gossip: gossipWithImages.length ? gossipWithImages : FALLBACK.gossip,
-        hotPlayers: groundedHotPlayers.length ? groundedHotPlayers : hotPlayers,
+        hotPlayers: groundedHotPlayers.length ? groundedHotPlayers : safeAiHotPlayers,
         microTips: groundedMicroTips.length ? groundedMicroTips : microTips,
         odds: groundedOdds.length ? groundedOdds : odds,
         peaceForecast: peaceForecast.length ? peaceForecast : FALLBACK.peaceForecast,
@@ -1217,12 +1218,16 @@ CRITICAL GROUNDING RULES:
         fakeLines: fakeLines.length ? fakeLines : FALLBACK.fakeLines,
       };
     } catch {
-      const groundedMicroTips = buildLiveMicroTips([], [], []);
       return {
         ...FALLBACK,
         fetchedAt: now,
         polymarketOnline,
-        microTips: groundedMicroTips,
+        microTips: [
+          {
+            en: "Live match feed is recalibrating; ignore any Brazil title takes until the next refresh.",
+            he: "פיד המשחקים מתאפס; להתעלם מכל תחזית זכייה על ברזיל עד הרענון הבא.",
+          },
+        ],
         odds: [],
         hotPlayers: [],
       };
