@@ -100,6 +100,11 @@ Return STRICT JSON, no prose, matching this TypeScript type:
   "drops": Array<{ "headline": string, "headline_he": string, "source": string, "sourceUrl": string, "minutesAgo": number, "tag": "SCANDAL"|"INJURY"|"DRAMA"|"MONEY"|"OFF-PITCH" }>, // 5 items
   "gossip": Array<{ "player": string, "country": string, "headline": string, "headline_he": string, "caption": string, "caption_he": string, "verdict": "HIT"|"MISS"|"CHAOS", "source": string, "sourceUrl": string, "imageSeed": string, "minutesAgo": number }>, // 6 items — fashion / red carpet / airport looks / off-pitch outfit hits & misses in the last 72h
   "hotPlayers": Array<{ "name": string, "country": string, "role": string, "blurb": string, "blurb_he": string, "socialTeaser": string, "socialTeaser_he": string, "socialUrl": string, "imageSeed": string, "score": string, "hoursAgo": number, "isPlayingLive": boolean, "match": string }>, // 8 items — current hottest players. If a match is happening RIGHT NOW at the current UTC time based on real 2026 World Cup schedule, mark ONE hot player from a team playing right now as isPlayingLive:true. Otherwise ALL isPlayingLive:false. Sort most-recent first (hoursAgo ascending).
+  "microTips": Array<{ "en": string, "he": string }>, // 5 dry one-liners for a scrolling ticker. Each MUST name a team/country and a specific player/coach/incident. Max 110 chars.
+  "odds": Array<{ "team": string, "team_he": string, "pct": number }>, // 5 items, biggest title-win probabilities right now. Integers, sum roughly 60-90. Sorted desc.
+  "peaceForecast": Array<{ "slot": string, "slot_he": string, "note": string, "note_he": string, "level": "critical"|"safe" }>, // 4 items — upcoming days/times with a dry note about household chaos. slot like "Thu 20:00".
+  "proTips": Array<{ "label": string, "label_he": string, "text": string, "text_he": string }>, // 2 sardonic survival tips. label like "Pro Survival Tip", text quoted, max 140 chars.
+  "fakeLines": Array<{ "en": string, "he": string }>, // 3 quoted "sounds-smart" football lines to drop in conversation.
   "totalWageredUsd": number
 }
 
