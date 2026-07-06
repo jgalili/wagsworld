@@ -1212,7 +1212,7 @@ function Index() {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {(intel?.gossip ?? []).map((it, i) => {
+            {(intel?.gossip ?? []).filter((it) => it.imageUrl).map((it, i) => {
               const headline = isHe ? it.headline_he : it.headline;
               const caption = isHe ? it.caption_he : it.caption;
               const verdictLabel =
@@ -1237,7 +1237,7 @@ function Index() {
                 >
                   <div className="relative aspect-[4/5] overflow-hidden bg-muted">
                     <img
-                      src={`https://picsum.photos/seed/${encodeURIComponent(it.imageSeed)}/500/620`}
+                      src={it.imageUrl}
                       alt={it.player}
                       loading="lazy"
                       className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100"
