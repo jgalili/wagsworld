@@ -4,10 +4,6 @@ import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
 import { getMondialIntel } from "@/lib/mondial-intel.functions";
 import { getMondialLive, type LiveMatch } from "@/lib/mondial-live.functions";
-import player1 from "@/assets/player-1.jpg";
-import player2 from "@/assets/player-2.jpg";
-import player3 from "@/assets/player-3.jpg";
-import player4 from "@/assets/player-4.jpg";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -374,29 +370,54 @@ function Index() {
     staleTime: 0,
     gcTime: 0,
     refetchOnMount: "always",
-    refetchOnWindowFocus: false,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
   });
   const intel = intelQuery.data;
   const intelAgo = useAgo(intel?.fetchedAt ?? Date.now());
 
-  // Live-updated content pulled from the AI feed (falls back to i18n static
-  // arrays when the feed hasn't loaded yet).
+  const liveTeamNames = liveData
+    ? Array.from(
+        new Set(
+          [...liveData.live, ...liveData.upcoming]
+            .flatMap((m) => [m.home.name, m.away.name])
+            .filter((team) => !/winner|round of|tbd/i.test(team)),
+        ),
+      )
+    : [];
+  const liveMicroFallback: readonly string[] = liveMatch
+    ? [
+        `${liveMatch.home.name} vs ${liveMatch.away.name} is live at ${liveMatch.home.score || 0}-${liveMatch.away.score || 0}. That is the actual news.`,
+        nextMatch
+          ? `Next: ${nextMatch.home.name} vs ${nextMatch.away.name}. No eliminated-team cosplay required.`
+          : "Next fixture is still loading from ESPN. Do not trust recycled tournament gossip.",
+      ]
+    : nextMatch
+      ? [
+          `Next: ${nextMatch.home.name} vs ${nextMatch.away.name} at ${fmtKickoff(nextMatch.kickoffISO, lang)}.`,
+          liveData?.recent[0]
+            ? `${liveData.recent[0].home.name} ${liveData.recent[0].home.score}-${liveData.recent[0].away.score} ${liveData.recent[0].away.name} is finished. Update all takes accordingly.`
+            : "Live tournament feed is loading. Stale Brazil hair news has been removed.",
+        ]
+      : ["Live tournament feed is loading. Stale Brazil hair news has been removed."];
+  const liveOddsFallback = liveTeamNames.slice(0, 5).map((team, i) => ({
+    team,
+    label: team,
+    pct: Math.max(6, 24 - i * 3),
+  }));
+
+  // Live-updated content pulled from grounded server data. Never fall back to
+  // old hard-coded teams here; showing nothing/loading is better than stale.
   const liveMicro: readonly string[] = intel?.microTips?.length
     ? intel.microTips.map((m) => (isHe ? m.he : m.en))
-    : t.micro;
+    : liveMicroFallback;
   const liveOdds = intel?.odds?.length
     ? intel.odds.map((o) => ({
         team: o.team,
         label: isHe ? o.team_he || o.team : o.team,
         pct: o.pct,
       }))
-    : [
-        { team: "France", label: t.teams.France, pct: 24 },
-        { team: "Brazil", label: t.teams.Brazil, pct: 21 },
-        { team: "Argentina", label: t.teams.Argentina, pct: 18 },
-        { team: "England", label: t.teams.England, pct: 14 },
-        { team: "Spain", label: t.teams.Spain, pct: 11 },
-      ];
+    : liveOddsFallback;
   const livePeace = intel?.peaceForecast?.length
     ? intel.peaceForecast.map((p) => ({
         slot: isHe ? p.slot_he || p.slot : p.slot,
@@ -421,7 +442,6 @@ function Index() {
     : t.fake;
 
   // Hot Player carousel
-  const playerImages = [player1, player2, player3, player4];
   const [playerFilter, setPlayerFilter] = useState<"week" | "last">("week");
   const [playerIdx, setPlayerIdx] = useState(0);
 
@@ -446,23 +466,14 @@ function Index() {
     _hasRealImg: !!p.imageUrl,
     _rank: i + 1,
   }));
-  const staticMapped = t.players.map((p, i) => ({
-    ...p,
-    role: "",
-    socialTeaser: "",
-    socialUrl: "",
-    isPlayingLive: false,
-    _img: playerImages[i % playerImages.length],
-    _hasRealImg: true,
-    _rank: i + 1,
-  }));
   // Only use AI players that actually resolved to a real photo. Otherwise
-  // fall back to the curated static list — no more scenery placeholders.
+  // show a loading/empty state — no stale invented names or scenery images.
   const livePlayersWithImgs = livePlayersMapped.filter((p) => p._hasRealImg);
-  const allPlayers = livePlayersWithImgs.length ? livePlayersWithImgs : staticMapped;
-  const filteredPlayers = allPlayers.filter((p) =>
+  const allPlayers = livePlayersWithImgs.length ? livePlayersWithImgs : [];
+  const filteredPlayersBase = allPlayers.filter((p) =>
     playerFilter === "week" ? p.daysAgo <= 3 : p.daysAgo >= 2,
   );
+  const filteredPlayers = filteredPlayersBase.length ? filteredPlayersBase : allPlayers;
   const safeIdx = filteredPlayers.length ? playerIdx % filteredPlayers.length : 0;
   const current = filteredPlayers[safeIdx];
   // The "Hottie on the pitch" card only makes sense when a match is actually
@@ -722,7 +733,7 @@ function Index() {
             </div>
           </div>
 
-          {current && (
+          {current ? (
             <motion.div
               key={`${playerFilter}-${safeIdx}`}
               initial={{ opacity: 0, y: 20 }}
@@ -771,10 +782,16 @@ function Index() {
                 </div>
               </div>
             </motion.div>
+          ) : (
+            <div className="min-h-[420px] border border-border rounded-sm bg-surface/30 flex items-center justify-center p-8 text-center">
+              <p className="max-w-[30ch] text-sm italic text-muted-foreground">
+                Live player photos are loading from verified sources. No placeholders, no scenery, no fake hotties.
+              </p>
+            </div>
           )}
 
           {/* Carousel controls */}
-          <div className="mt-6 flex items-center justify-between gap-4">
+          {filteredPlayers.length > 0 && <div className="mt-6 flex items-center justify-between gap-4">
             <button
               onClick={goPrev}
               className="font-mono text-[11px] uppercase tracking-widest border border-border hover:border-primary hover:text-primary rounded-full px-4 py-2 transition-colors"
@@ -799,10 +816,10 @@ function Index() {
             >
               {t.nextLabel} →
             </button>
-          </div>
+          </div>}
 
           {/* Thumbnail rail */}
-          <div className="mt-6 grid grid-cols-4 gap-2">
+          {filteredPlayers.length > 0 && <div className="mt-6 grid grid-cols-4 gap-2">
             {filteredPlayers.map((p, i) => (
               <button
                 key={i}
@@ -814,7 +831,7 @@ function Index() {
                 <img src={p._img} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
               </button>
             ))}
-          </div>
+          </div>}
         </motion.div>
 
         {/* RIGHT: fixtures + tip */}

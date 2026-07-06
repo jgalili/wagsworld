@@ -146,6 +146,444 @@ const slug = (s: string) =>
     .replace(/(^-|-$)/g, "")
     .slice(0, 40) || "player";
 
+type GroundedMatch = {
+  kickoffISO: string;
+  state: "pre" | "in" | "post";
+  home: string;
+  away: string;
+  homeScore: number;
+  awayScore: number;
+  minute?: string;
+  detail: string;
+  phase: string;
+  winner?: string;
+  loser?: string;
+  isKnockout: boolean;
+};
+
+const TEAM_HE: Record<string, string> = {
+  Argentina: "ארגנטינה",
+  Belgium: "בלגיה",
+  Colombia: "קולומביה",
+  Egypt: "מצרים",
+  England: "אנגליה",
+  France: "צרפת",
+  Morocco: "מרוקו",
+  Norway: "נורבגיה",
+  Portugal: "פורטוגל",
+  Spain: "ספרד",
+  Switzerland: "שווייץ",
+  "United States": "ארצות הברית",
+};
+
+const TITLE_STRENGTH: Record<string, number> = {
+  Spain: 18,
+  France: 17,
+  Argentina: 15,
+  Portugal: 14,
+  England: 13,
+  Belgium: 10,
+  Morocco: 9,
+  Colombia: 8,
+  Norway: 8,
+  Switzerland: 7,
+  "United States": 7,
+  Egypt: 5,
+};
+
+const TEAM_HOT_PLAYERS: Record<string, Array<Omit<HotPlayerLive, "country" | "imageSeed" | "hoursAgo" | "isPlayingLive" | "match">>> = {
+  Portugal: [
+    {
+      name: "Cristiano Ronaldo",
+      role: "Striker",
+      blurb: "Portugal's jawline remains a broadcast event. The abs have their own federation.",
+      blurb_he: "קו הלסת של פורטוגל הוא עדיין אירוע שידור. לקוביות יש התאחדות משלהן.",
+      socialTeaser: "Instagram: post-training shirtless recovery shot, because subtlety retired first.",
+      socialTeaser_he: "אינסטגרם: תמונת התאוששות בלי חולצה אחרי אימון, כי העדינות פרשה קודם.",
+      socialUrl: gw("Cristiano Ronaldo instagram"),
+      score: "9.9",
+    },
+    {
+      name: "João Félix",
+      role: "Second striker",
+      blurb: "Portugal's soft-focus menace: sleepy eyes, expensive touch, unnecessary cheekbones.",
+      blurb_he: "האיום הרך של פורטוגל: עיניים מנומנמות, מגע יקר, עצמות לחיים מיותרות.",
+      socialTeaser: "Instagram: black-and-white hotel mirror selfie, no context, too much intent.",
+      socialTeaser_he: "אינסטגרם: סלפי מראה בשחור-לבן מהמלון, בלי הקשר, עם יותר מדי כוונה.",
+      socialUrl: gw("João Félix instagram"),
+      score: "9.5",
+    },
+    {
+      name: "Rafael Leão",
+      role: "Left winger",
+      blurb: "Portugal's grin is a public utility. The acceleration is merely the excuse.",
+      blurb_he: "החיוך של פורטוגל הוא שירות ציבורי. התאוצה היא רק התירוץ.",
+      socialTeaser: "Instagram: tunnel walk reel with sunglasses indoors. Illegal, but effective.",
+      socialTeaser_he: "אינסטגרם: ריל הליכה במנהרה עם משקפי שמש בפנים. לא חוקי, אבל עובד.",
+      socialUrl: gw("Rafael Leão instagram"),
+      score: "9.4",
+    },
+  ],
+  Spain: [
+    {
+      name: "Lamine Yamal",
+      role: "Right winger",
+      blurb: "Spain's baby-faced problem: absurd feet, calm eyes, defenders visibly aging.",
+      blurb_he: "הבעיה הצעירה של ספרד: רגליים לא הגיוניות, עיניים רגועות, מגנים שמזדקנים מולך.",
+      socialTeaser: "Instagram: boots-and-chain close-up before kickoff. The comments are unwell.",
+      socialTeaser_he: "אינסטגרם: קלוז-אפ של נעליים ושרשרת לפני שריקה. התגובות לא יציבות.",
+      socialUrl: gw("Lamine Yamal instagram"),
+      score: "9.7",
+    },
+    {
+      name: "Pedri",
+      role: "Central midfielder",
+      blurb: "Spain's quiet luxury midfielder. Looks innocent, ruins entire pressing schemes.",
+      blurb_he: "קשר השקט-יוקרתי של ספרד. נראה תמים, הורס תוכניות לחץ שלמות.",
+      socialTeaser: "Instagram: recovery-room photo with wet hair and a caption pretending it is about work.",
+      socialTeaser_he: "אינסטגרם: תמונת התאוששות עם שיער רטוב וכיתוב שמעמיד פנים שזה על עבודה.",
+      socialUrl: gw("Pedri instagram"),
+      score: "9.4",
+    },
+    {
+      name: "Nico Williams",
+      role: "Left winger",
+      blurb: "Spain's speed merchant with a smile that keeps starting side quests.",
+      blurb_he: "סוחר המהירות של ספרד עם חיוך שפותח משימות צד.",
+      socialTeaser: "TikTok: dressing-room dance clip, suspiciously perfect lighting, zero apologies.",
+      socialTeaser_he: "טיקטוק: ריקוד חדר הלבשה, תאורה מושלמת מדי, אפס התנצלות.",
+      socialUrl: gw("Nico Williams tiktok"),
+      score: "9.3",
+    },
+  ],
+  "United States": [
+    {
+      name: "Christian Pulisic",
+      role: "Winger",
+      blurb: "United States' main character energy, now with stubble and suspicious calm.",
+      blurb_he: "אנרגיית הדמות הראשית של ארצות הברית, עכשיו עם זיפים ורוגע חשוד.",
+      socialTeaser: "Instagram: captain-core locker photo, jaw clenched like a campaign poster.",
+      socialTeaser_he: "אינסטגרם: תמונת קפטן מחדר ההלבשה, לסת נעולה כמו פוסטר בחירות.",
+      socialUrl: gw("Christian Pulisic instagram"),
+      score: "9.1",
+    },
+    {
+      name: "Weston McKennie",
+      role: "Box-to-box midfielder",
+      blurb: "United States' chaos engine with shoulders built for post-match thirst edits.",
+      blurb_he: "מנוע הכאוס של ארצות הברית עם כתפיים לעריכות צמא אחרי משחק.",
+      socialTeaser: "Instagram story: gym mirror, sleeveless top, pretending the weights are the subject.",
+      socialTeaser_he: "סטורי באינסטגרם: מראת חדר כושר, גופייה, כאילו המשקולות הן הנושא.",
+      socialUrl: gw("Weston McKennie instagram"),
+      score: "8.9",
+    },
+  ],
+  Belgium: [
+    {
+      name: "Kevin De Bruyne",
+      role: "Playmaker",
+      blurb: "Belgium's stern art teacher look, if the art teacher could pass through walls.",
+      blurb_he: "מראה המורה לאמנות הקשוח של בלגיה, אם המורה היה מוסר דרך קירות.",
+      socialTeaser: "Instagram: training-ground stare into the middle distance. Mature. Dangerous.",
+      socialTeaser_he: "אינסטגרם: מבט אימונים לאופק. בוגר. מסוכן.",
+      socialUrl: gw("Kevin De Bruyne instagram"),
+      score: "9.2",
+    },
+    {
+      name: "Jérémy Doku",
+      role: "Winger",
+      blurb: "Belgium's turbo button with cheekbones and an alarming disregard for ankles.",
+      blurb_he: "כפתור הטורבו של בלגיה עם עצמות לחיים וזלזול מדאיג בקרסוליים.",
+      socialTeaser: "TikTok: tunnel bounce before warmups. The comments have lost procedural dignity.",
+      socialTeaser_he: "טיקטוק: קפיצות במנהרה לפני חימום. התגובות איבדו כל כבוד פרוצדורלי.",
+      socialUrl: gw("Jérémy Doku tiktok"),
+      score: "9.0",
+    },
+  ],
+  Argentina: [
+    {
+      name: "Julián Álvarez",
+      role: "Forward",
+      blurb: "Argentina's polite assassin: soft smile, very rude movement in the box.",
+      blurb_he: "המתנקש המנומס של ארגנטינה: חיוך רך, תנועה חצופה ברחבה.",
+      socialTeaser: "Instagram: sleepy travel-day selfie, hoodie low, national crisis in comments.",
+      socialTeaser_he: "אינסטגרם: סלפי יום נסיעה ישנוני, קפוצ'ון נמוך, משבר לאומי בתגובות.",
+      socialUrl: gw("Julián Álvarez instagram"),
+      score: "9.3",
+    },
+    {
+      name: "Lautaro Martínez",
+      role: "Striker",
+      blurb: "Argentina's clenched-jaw striker, built like a warning label.",
+      blurb_he: "החלוץ של ארגנטינה עם לסת נעולה, בנוי כמו תווית אזהרה.",
+      socialTeaser: "Instagram: post-gym black tank photo. Nobody involved was trying to be subtle.",
+      socialTeaser_he: "אינסטגרם: תמונת אחרי חדר כושר בגופייה שחורה. אף אחד לא ניסה להיות עדין.",
+      socialUrl: gw("Lautaro Martínez instagram"),
+      score: "9.1",
+    },
+  ],
+  Egypt: [
+    {
+      name: "Mohamed Salah",
+      role: "Right winger",
+      blurb: "Egypt's curls, shoulders, and left foot remain three separate problems.",
+      blurb_he: "התלתלים, הכתפיים ורגל שמאל של מצרים הם שלוש בעיות נפרדות.",
+      socialTeaser: "Instagram: recovery mat photo, arms out, pretending it is just stretching.",
+      socialTeaser_he: "אינסטגרם: תמונת מזרן התאוששות, ידיים פרושות, כאילו זו רק מתיחה.",
+      socialUrl: gw("Mohamed Salah instagram"),
+      score: "9.6",
+    },
+  ],
+  France: [
+    {
+      name: "Kylian Mbappé",
+      role: "Forward",
+      blurb: "France's smile says harmless. The sprint says your evening is cancelled.",
+      blurb_he: "החיוך של צרפת אומר תמים. הספרינט אומר שהערב שלך בוטל.",
+      socialTeaser: "Instagram: tunnel grin and gloves, posted exactly when everyone needed oxygen.",
+      socialTeaser_he: "אינסטגרם: חיוך במנהרה וכפפות, פורסם בדיוק כשכולם היו צריכים חמצן.",
+      socialUrl: gw("Kylian Mbappé instagram"),
+      score: "9.8",
+    },
+    {
+      name: "Ousmane Dembélé",
+      role: "Winger",
+      blurb: "France's chaos dribbler with sleepy eyes and bad intentions for full-backs.",
+      blurb_he: "הדריבליסט הכאוטי של צרפת עם עיניים מנומנמות וכוונות רעות למגנים.",
+      socialTeaser: "Instagram: headphones-on bus selfie, jawline doing unnecessary overtime.",
+      socialTeaser_he: "אינסטגרם: סלפי אוטובוס עם אוזניות, קו לסת עובד שעות נוספות.",
+      socialUrl: gw("Ousmane Dembélé instagram"),
+      score: "9.1",
+    },
+  ],
+  Morocco: [
+    {
+      name: "Achraf Hakimi",
+      role: "Wing-back",
+      blurb: "Morocco's runway-speed full-back. Cheekbones, engines, consequences.",
+      blurb_he: "המגן של מרוקו במהירות מסלול. עצמות לחיים, מנועים, השלכות.",
+      socialTeaser: "Instagram: tailored arrival fit, sunglasses, everybody suddenly understands tactics.",
+      socialTeaser_he: "אינסטגרם: לוק הגעה מחויט, משקפי שמש, ופתאום כולם מבינים טקטיקה.",
+      socialUrl: gw("Achraf Hakimi instagram"),
+      score: "9.5",
+    },
+  ],
+  England: [
+    {
+      name: "Jude Bellingham",
+      role: "Midfielder",
+      blurb: "England's brooding headline generator. Every camera knows where he is.",
+      blurb_he: "מחולל הכותרות המהורהר של אנגליה. כל מצלמה יודעת איפה הוא.",
+      socialTeaser: "Instagram: post-match stare, shirt half-zipped, comments behaving predictably.",
+      socialTeaser_he: "אינסטגרם: מבט אחרי משחק, חולצה חצי פתוחה, תגובות צפויות לחלוטין.",
+      socialUrl: gw("Jude Bellingham instagram"),
+      score: "9.8",
+    },
+    {
+      name: "Bukayo Saka",
+      role: "Winger",
+      blurb: "England's golden boy smile, weaponized against both full-backs and cynicism.",
+      blurb_he: "חיוך ילד הזהב של אנגליה, נשק נגד מגנים וציניות.",
+      socialTeaser: "Instagram: recovery boots and soft grin. The internet folded neatly.",
+      socialTeaser_he: "אינסטגרם: מגפי התאוששות וחיוך רך. האינטרנט התקפל יפה.",
+      socialUrl: gw("Bukayo Saka instagram"),
+      score: "9.2",
+    },
+  ],
+  Norway: [
+    {
+      name: "Erling Haaland",
+      role: "Striker",
+      blurb: "Norway's Nordic demolition unit, inexplicably photogenic while terrifying people.",
+      blurb_he: "יחידת ההריסה הנורדית של נורבגיה, פוטוגנית באופן לא סביר בזמן שהיא מפחידה אנשים.",
+      socialTeaser: "Instagram: ice-bath recovery photo. Very Viking, very unnecessary.",
+      socialTeaser_he: "אינסטגרם: תמונת אמבטיית קרח. מאוד ויקינגי, מאוד לא הכרחי.",
+      socialUrl: gw("Erling Haaland instagram"),
+      score: "9.7",
+    },
+  ],
+  Colombia: [
+    {
+      name: "Jhon Durán",
+      role: "Striker",
+      blurb: "Colombia's chaos finisher with movie-villain eyebrows and zero chill.",
+      blurb_he: "המסיים הכאוטי של קולומביה עם גבות של נבל קולנוע ואפס רוגע.",
+      socialTeaser: "Instagram: late-night studio story, chain visible, caption doing no work.",
+      socialTeaser_he: "אינסטגרם: סטורי אולפן לילי, שרשרת בפריים, כיתוב שלא עובד קשה.",
+      socialUrl: gw("Jhon Durán instagram"),
+      score: "9.0",
+    },
+  ],
+  Switzerland: [
+    {
+      name: "Granit Xhaka",
+      role: "Midfielder",
+      blurb: "Switzerland's stern jaw, perfect hair, and elite argument posture.",
+      blurb_he: "הלסת הקשוחה, השיער המושלם ועמידת הוויכוח העילית של שווייץ.",
+      socialTeaser: "Instagram: captain's tunnel photo, sleeves tight enough to file paperwork.",
+      socialTeaser_he: "אינסטגרם: תמונת קפטן במנהרה, שרוולים צמודים מספיק לבירוקרטיה.",
+      socialUrl: gw("Granit Xhaka instagram"),
+      score: "8.8",
+    },
+  ],
+};
+
+function canonicalTeam(name: string) {
+  if (name === "USA" || /united states|u\.s\./i.test(name)) return "United States";
+  return name.replace(/\s+/g, " ").trim();
+}
+
+function isPlaceholderTeam(name: string) {
+  return /winner|runner|round of|group|tbd|to be determined/i.test(name);
+}
+
+function uniq<T>(items: T[]) {
+  return Array.from(new Set(items));
+}
+
+function matchupLabel(match: GroundedMatch) {
+  return `${match.home} vs ${match.away}`;
+}
+
+function buildLiveMicroTips(liveMatches: GroundedMatch[], upcomingMatches: GroundedMatch[], recentMatches: GroundedMatch[]): MicroTip[] {
+  const tips: MicroTip[] = [];
+  const live = liveMatches[0];
+  if (live) {
+    tips.push({
+      en: `${matchupLabel(live)} is live at ${live.homeScore}-${live.awayScore}; say "compact mid-block" and look busy.`,
+      he: `${live.home} נגד ${live.away} חי עכשיו ב-${live.homeScore}-${live.awayScore}; תגידי "בלוק אמצעי צפוף" ותיראי עסוקה.`,
+    });
+    tips.push({
+      en: `${live.home} and ${live.away} are the only acceptable live gossip targets right now.`,
+      he: `${live.home} ו-${live.away} הן מטרות הרכילות החיות היחידות כרגע.`,
+    });
+  }
+  const next = upcomingMatches[0];
+  if (next) {
+    tips.push({
+      en: `Next up: ${matchupLabel(next)}. Prepare one opinion about pressing and one snack exit plan.`,
+      he: `הבא בתור: ${next.home} נגד ${next.away}. להכין דעה אחת על לחץ ותוכנית מילוט לנשנושים.`,
+    });
+  }
+  for (const match of recentMatches) {
+    if (!match.loser || !match.winner) continue;
+    tips.push({
+      en: `${match.loser} are out after ${match.homeScore}-${match.awayScore} vs ${match.winner}; update the group chat accordingly.`,
+      he: `${match.loser} הודחה אחרי ${match.homeScore}-${match.awayScore} מול ${match.winner}; לעדכן את הווטסאפ בהתאם.`,
+    });
+    if (tips.length >= 5) break;
+  }
+  for (const match of upcomingMatches.slice(1)) {
+    tips.push({
+      en: `${matchupLabel(match)} is still pending, so any title takes must include both teams.`,
+      he: `${match.home} נגד ${match.away} עדיין מחכה, אז כל תחזית זכייה חייבת לכלול את שתיהן.`,
+    });
+    if (tips.length >= 5) break;
+  }
+  return tips.slice(0, 5);
+}
+
+function buildLiveOdds(liveMatches: GroundedMatch[], upcomingMatches: GroundedMatch[], eliminatedTeams: string[]): OddsRow[] {
+  const eliminated = new Set(eliminatedTeams.map((t) => t.toLowerCase()));
+  const activeTeams = uniq(
+    [...liveMatches, ...upcomingMatches].flatMap((m) => [m.home, m.away]),
+  ).filter((team) => !isPlaceholderTeam(team) && !eliminated.has(team.toLowerCase()));
+
+  const scoreFor = (team: string) => {
+    let score = TITLE_STRENGTH[team] ?? 4;
+    const live = liveMatches.find((m) => m.home === team || m.away === team);
+    if (live) {
+      const own = live.home === team ? live.homeScore : live.awayScore;
+      const opp = live.home === team ? live.awayScore : live.homeScore;
+      if (own > opp) score += 4;
+      if (own < opp) score -= 6;
+      score += 1;
+    }
+    return Math.max(1, score);
+  };
+
+  const ranked = activeTeams
+    .map((team) => ({ team, raw: scoreFor(team) }))
+    .sort((a, b) => b.raw - a.raw)
+    .slice(0, 5);
+  const total = ranked.reduce((sum, row) => sum + row.raw, 0) || 1;
+  return ranked.map((row) => ({
+    team: row.team,
+    team_he: TEAM_HE[row.team] ?? row.team,
+    pct: Math.max(1, Math.round((row.raw / total) * 78)),
+  }));
+}
+
+function buildLiveHotPlayers(liveMatches: GroundedMatch[], upcomingMatches: GroundedMatch[]): HotPlayerLive[] {
+  const players: HotPlayerLive[] = [];
+  const addTeam = (team: string, match: GroundedMatch, isLive: boolean, limit: number) => {
+    if (isPlaceholderTeam(team)) return;
+    const pool = TEAM_HOT_PLAYERS[team] ?? [];
+    for (const base of pool.slice(0, limit)) {
+      players.push({
+        ...base,
+        country: team,
+        imageSeed: slug(`${base.name}-${team}`),
+        hoursAgo: isLive ? 0 : 1,
+        isPlayingLive: isLive,
+        match: `${isLive ? "LIVE — " : "NEXT — "}${matchupLabel(match)}`,
+      });
+    }
+  };
+
+  for (const match of liveMatches) {
+    addTeam(match.home, match, true, 2);
+    addTeam(match.away, match, true, 2);
+  }
+  for (const match of upcomingMatches.slice(0, 1)) {
+    addTeam(match.home, match, false, 2);
+    addTeam(match.away, match, false, 2);
+  }
+  for (const match of upcomingMatches.slice(1)) {
+    addTeam(match.home, match, false, 1);
+    addTeam(match.away, match, false, 1);
+    if (players.length >= 8) break;
+  }
+
+  return players.slice(0, 8).map((p, i) => ({
+    ...p,
+    score: (Math.max(8.4, Number(p.score) - i * 0.03)).toFixed(1),
+  }));
+}
+
+async function wikiThumb(name: string): Promise<string | undefined> {
+  if (!name) return undefined;
+  try {
+    const r = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name.replace(/\s+/g, "_"))}`,
+      {
+        signal: AbortSignal.timeout(2500),
+        headers: {
+          accept: "application/json",
+          "user-agent": "WagsWorld/1.0 (https://wagsworld.lovable.app)",
+        },
+      },
+    );
+    if (!r.ok) return undefined;
+    const j = (await r.json()) as {
+      originalimage?: { source?: string };
+      thumbnail?: { source?: string };
+      type?: string;
+    };
+    if (j.type === "disambiguation") return undefined;
+    return j.thumbnail?.source ?? j.originalimage?.source;
+  } catch {
+    return undefined;
+  }
+}
+
+async function attachHotPlayerImages(players: HotPlayerLive[]) {
+  const withImages = await Promise.all(
+    players.map(async (p) => ({ ...p, imageUrl: await wikiThumb(p.name) })),
+  );
+  return withImages.filter((p) => !!p.imageUrl);
+}
+
 const FALLBACK: Omit<MondialIntel, "fetchedAt" | "polymarketOnline"> = {
   totalWageredUsd: 48_312_000,
   markets: [
@@ -515,8 +953,8 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
       polymarketOnline = false;
     }
 
-    // Ground the AI in real ESPN data so it doesn't invent teams/players
-    // that are already eliminated.
+    // Ground every visible section in real ESPN data first. The AI can add
+    // color, but standings-sensitive widgets come from this deterministic block.
     const ymd = (d: Date) => {
       const y = d.getUTCFullYear();
       const m = String(d.getUTCMonth() + 1).padStart(2, "0");
@@ -525,6 +963,7 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
     };
     const start = ymd(new Date(now - 5 * 86_400_000));
     const end = ymd(new Date(now + 7 * 86_400_000));
+    let groundedMatches: GroundedMatch[] = [];
     let liveTeams: string[] = [];
     let upcomingTeams: string[] = [];
     let recentResults: string[] = [];
@@ -537,8 +976,9 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
       if (scb.ok) {
         const data = (await scb.json()) as {
           events?: Array<{
+            date: string;
             competitions: Array<{
-              status: { type: { state: string; completed?: boolean } };
+              status: { displayClock?: string; type: { state: string; detail?: string; shortDetail?: string; completed?: boolean } };
               competitors: Array<{
                 homeAway: "home" | "away";
                 score?: string;
@@ -553,27 +993,41 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
         for (const e of events) {
           const c = e.competitions?.[0];
           if (!c) continue;
-          const st = c.status.type.state;
+          const st = c.status.type.state as GroundedMatch["state"];
           const home = c.competitors.find((x) => x.homeAway === "home");
           const away = c.competitors.find((x) => x.homeAway === "away");
           if (!home || !away) continue;
-          const hn = home.team.displayName;
-          const an = away.team.displayName;
+          const hn = canonicalTeam(home.team.displayName);
+          const an = canonicalTeam(away.team.displayName);
           const slug = e.season?.slug ?? "";
           const isKnockout = /round-of|quarter|semi|final/i.test(slug);
+          const hs = Number(home.score ?? "0");
+          const as = Number(away.score ?? "0");
+          const winner =
+            home.winner === true ? hn : away.winner === true ? an : st === "post" && hs > as ? hn : st === "post" && as > hs ? an : undefined;
+          const loser = winner === hn ? an : winner === an ? hn : undefined;
+          groundedMatches.push({
+            kickoffISO: e.date,
+            state: st,
+            home: hn,
+            away: an,
+            homeScore: hs,
+            awayScore: as,
+            minute: c.status.displayClock || c.status.type.shortDetail,
+            detail: c.status.type.detail ?? c.status.type.shortDetail ?? "",
+            phase: slug.replace(/-/g, " ") || "world cup",
+            winner,
+            loser,
+            isKnockout,
+          });
           if (st === "in") {
             liveTeams.push(hn, an);
           } else if (st === "pre") {
             upcomingTeams.push(hn, an);
           } else if (st === "post") {
-            const hs = Number(home.score ?? "0");
-            const as = Number(away.score ?? "0");
             recentResults.push(`${hn} ${hs}-${as} ${an}`);
             if (isKnockout) {
-              if (home.winner === true) eliminatedTeams.push(an);
-              else if (away.winner === true) eliminatedTeams.push(hn);
-              else if (hs > as) eliminatedTeams.push(an);
-              else if (as > hs) eliminatedTeams.push(hn);
+              if (loser) eliminatedTeams.push(loser);
             }
           }
         }
@@ -581,13 +1035,32 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
     } catch {
       // best-effort — fall through with empty context
     }
-    liveTeams = Array.from(new Set(liveTeams));
-    upcomingTeams = Array.from(new Set(upcomingTeams));
-    eliminatedTeams = Array.from(new Set(eliminatedTeams));
-    const stillActive = Array.from(new Set([...liveTeams, ...upcomingTeams]));
+    groundedMatches = groundedMatches.sort((a, b) => a.kickoffISO.localeCompare(b.kickoffISO));
+    const liveMatches = groundedMatches.filter((m) => m.state === "in");
+    const upcomingMatches = groundedMatches.filter((m) => m.state === "pre");
+    const recentMatches = groundedMatches
+      .filter((m) => m.state === "post")
+      .sort((a, b) => b.kickoffISO.localeCompare(a.kickoffISO));
+    liveTeams = uniq(liveTeams).filter((team) => !isPlaceholderTeam(team));
+    upcomingTeams = uniq(upcomingTeams).filter((team) => !isPlaceholderTeam(team));
+    eliminatedTeams = uniq(eliminatedTeams).filter((team) => !isPlaceholderTeam(team));
+    const stillActive = uniq([...liveTeams, ...upcomingTeams]).filter(
+      (team) => !isPlaceholderTeam(team) && !eliminatedTeams.map((t) => t.toLowerCase()).includes(team.toLowerCase()),
+    );
+    const groundedMicroTips = buildLiveMicroTips(liveMatches, upcomingMatches, recentMatches);
+    const groundedOdds = buildLiveOdds(liveMatches, upcomingMatches, eliminatedTeams);
+    const groundedHotPlayers = await attachHotPlayerImages(buildLiveHotPlayers(liveMatches, upcomingMatches));
+    const liveGroundedFallback = (): MondialIntel => ({
+      ...FALLBACK,
+      fetchedAt: now,
+      polymarketOnline,
+      microTips: groundedMicroTips,
+      odds: groundedOdds,
+      hotPlayers: groundedHotPlayers,
+    });
 
     if (!apiKey) {
-      return { ...FALLBACK, fetchedAt: now, polymarketOnline };
+      return liveGroundedFallback();
     }
 
     const groundingBlock = `LIVE_CONTEXT (from ESPN, ${new Date(now).toISOString()}):
@@ -627,14 +1100,14 @@ CRITICAL GROUNDING RULES:
       });
 
       if (!res.ok) {
-        return { ...FALLBACK, fetchedAt: now, polymarketOnline };
+        return liveGroundedFallback();
       }
 
       const json = (await res.json()) as {
         choices?: Array<{ message?: { content?: string } }>;
       };
       const content = json.choices?.[0]?.message?.content;
-      if (!content) return { ...FALLBACK, fetchedAt: now, polymarketOnline };
+      if (!content) return liveGroundedFallback();
 
       const parsed = JSON.parse(content) as Partial<MondialIntel>;
       if (
@@ -642,7 +1115,7 @@ CRITICAL GROUNDING RULES:
         !Array.isArray(parsed.winners) ||
         !Array.isArray(parsed.drops)
       ) {
-        return { ...FALLBACK, fetchedAt: now, polymarketOnline };
+        return liveGroundedFallback();
       }
 
       // Normalize: guarantee URLs even when the model omits them.
@@ -686,26 +1159,6 @@ CRITICAL GROUNDING RULES:
           return (a.hoursAgo ?? 999) - (b.hoursAgo ?? 999);
         });
 
-      // Resolve real player photos from Wikipedia in parallel.
-      const wikiThumb = async (name: string): Promise<string | undefined> => {
-        if (!name) return undefined;
-        try {
-          const r = await fetch(
-            `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name.replace(/\s+/g, "_"))}`,
-            { signal: AbortSignal.timeout(2500), headers: { accept: "application/json" } },
-          );
-          if (!r.ok) return undefined;
-          const j = (await r.json()) as {
-            originalimage?: { source?: string };
-            thumbnail?: { source?: string };
-            type?: string;
-          };
-          if (j.type === "disambiguation") return undefined;
-          return j.originalimage?.source ?? j.thumbnail?.source;
-        } catch {
-          return undefined;
-        }
-      };
       const hotPlayers = await Promise.all(
         hotPlayersFiltered.map(async (p) => ({ ...p, imageUrl: await wikiThumb(p.name) })),
       );
@@ -748,10 +1201,7 @@ CRITICAL GROUNDING RULES:
       const fakeLines = ((parsed.fakeLines ?? []) as FakeLine[])
         .filter((f) => f && f.en && f.he).slice(0, 3);
 
-      // Fallback odds: strip any eliminated teams from the built-in list too.
-      const safeFallbackOdds = FALLBACK.odds.filter(
-        (o) => !eliminatedSet.has(o.team.toLowerCase()),
-      );
+      const safeAiHotPlayers = hotPlayers.filter((p) => p.imageUrl);
       return {
         fetchedAt: now,
         polymarketOnline,
@@ -763,15 +1213,15 @@ CRITICAL GROUNDING RULES:
         winners,
         drops,
         gossip: gossipWithImages.length ? gossipWithImages : FALLBACK.gossip,
-        hotPlayers: hotPlayers.length ? hotPlayers : FALLBACK.hotPlayers,
-        microTips: microTips.length ? microTips : FALLBACK.microTips,
-        odds: odds.length ? odds : (safeFallbackOdds.length ? safeFallbackOdds : FALLBACK.odds),
+        hotPlayers: groundedHotPlayers.length ? groundedHotPlayers : safeAiHotPlayers,
+        microTips: groundedMicroTips.length ? groundedMicroTips : microTips,
+        odds: groundedOdds.length ? groundedOdds : odds,
         peaceForecast: peaceForecast.length ? peaceForecast : FALLBACK.peaceForecast,
         proTips: proTips.length === 2 ? proTips : FALLBACK.proTips,
         fakeLines: fakeLines.length ? fakeLines : FALLBACK.fakeLines,
       };
     } catch {
-      return { ...FALLBACK, fetchedAt: now, polymarketOnline };
+      return liveGroundedFallback();
     }
   },
 );
