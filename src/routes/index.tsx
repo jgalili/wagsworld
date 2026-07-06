@@ -379,6 +379,47 @@ function Index() {
   const intel = intelQuery.data;
   const intelAgo = useAgo(intel?.fetchedAt ?? Date.now());
 
+  // Live-updated content pulled from the AI feed (falls back to i18n static
+  // arrays when the feed hasn't loaded yet).
+  const liveMicro: string[] = intel?.microTips?.length
+    ? intel.microTips.map((m) => (isHe ? m.he : m.en))
+    : t.micro;
+  const liveOdds = intel?.odds?.length
+    ? intel.odds.map((o) => ({
+        team: o.team,
+        label: isHe ? o.team_he || o.team : o.team,
+        pct: o.pct,
+      }))
+    : [
+        { team: "France", label: t.teams.France, pct: 24 },
+        { team: "Brazil", label: t.teams.Brazil, pct: 21 },
+        { team: "Argentina", label: t.teams.Argentina, pct: 18 },
+        { team: "England", label: t.teams.England, pct: 14 },
+        { team: "Spain", label: t.teams.Spain, pct: 11 },
+      ];
+  const livePeace = intel?.peaceForecast?.length
+    ? intel.peaceForecast.map((p) => ({
+        slot: isHe ? p.slot_he || p.slot : p.slot,
+        note: isHe ? p.note_he || p.note : p.note,
+        level: p.level,
+      }))
+    : t.peace.map((p) => ({ slot: p.slot, note: p.note, level: p.level }));
+  const liveProTip1 = intel?.proTips?.[0]
+    ? {
+        label: isHe ? intel.proTips[0].label_he : intel.proTips[0].label,
+        text: isHe ? intel.proTips[0].text_he : intel.proTips[0].text,
+      }
+    : { label: t.proTip, text: t.proTipText };
+  const liveProTip2 = intel?.proTips?.[1]
+    ? {
+        label: isHe ? intel.proTips[1].label_he : intel.proTips[1].label,
+        text: isHe ? intel.proTips[1].text_he : intel.proTips[1].text,
+      }
+    : { label: t.proTip2, text: t.proTipText2 };
+  const liveFake = intel?.fakeLines?.length
+    ? intel.fakeLines.map((f) => (isHe ? f.he : f.en))
+    : t.fake;
+
   // Hot Player carousel
   const playerImages = [player1, player2, player3, player4];
   const [playerFilter, setPlayerFilter] = useState<"week" | "last">("week");
