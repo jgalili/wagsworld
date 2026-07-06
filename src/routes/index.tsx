@@ -484,9 +484,10 @@ function Index() {
   // fall back to the curated static list — no more scenery placeholders.
   const livePlayersWithImgs = livePlayersMapped.filter((p) => p._hasRealImg);
   const allPlayers = livePlayersWithImgs.length ? livePlayersWithImgs : [];
-  const filteredPlayers = allPlayers.filter((p) =>
+  const filteredPlayersBase = allPlayers.filter((p) =>
     playerFilter === "week" ? p.daysAgo <= 3 : p.daysAgo >= 2,
   );
+  const filteredPlayers = filteredPlayersBase.length ? filteredPlayersBase : allPlayers;
   const safeIdx = filteredPlayers.length ? playerIdx % filteredPlayers.length : 0;
   const current = filteredPlayers[safeIdx];
   // The "Hottie on the pitch" card only makes sense when a match is actually
