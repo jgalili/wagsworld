@@ -438,7 +438,12 @@ function Index() {
     socialTeaser: isHe ? p.socialTeaser_he : p.socialTeaser,
     socialUrl: p.socialUrl,
     isPlayingLive: p.isPlayingLive,
-    _img: `https://picsum.photos/seed/${encodeURIComponent(p.imageSeed || `${p.name}-${i}`)}/560/700`,
+    _img:
+      p.imageUrl ||
+      `https://commons.wikimedia.org/w/index.php?search=${encodeURIComponent(
+        p.name + " footballer",
+      )}&title=Special:MediaSearch&go=Go&type=image`,
+    _hasRealImg: !!p.imageUrl,
     _rank: i + 1,
   }));
   const staticMapped = t.players.map((p, i) => ({
@@ -448,19 +453,32 @@ function Index() {
     socialUrl: "",
     isPlayingLive: false,
     _img: playerImages[i % playerImages.length],
+    _hasRealImg: true,
     _rank: i + 1,
   }));
-  const allPlayers = livePlayersMapped.length ? livePlayersMapped : staticMapped;
+  // Only use AI players that actually resolved to a real photo. Otherwise
+  // fall back to the curated static list — no more scenery placeholders.
+  const livePlayersWithImgs = livePlayersMapped.filter((p) => p._hasRealImg);
+  const allPlayers = livePlayersWithImgs.length ? livePlayersWithImgs : staticMapped;
   const filteredPlayers = allPlayers.filter((p) =>
     playerFilter === "week" ? p.daysAgo <= 3 : p.daysAgo >= 2,
   );
   const safeIdx = filteredPlayers.length ? playerIdx % filteredPlayers.length : 0;
   const current = filteredPlayers[safeIdx];
-  // Pick the top live-playing player from intel (if any) — used to override the live hottie card.
-  const livePlayingHottie = livePlayersRaw.find((p) => p.isPlayingLive);
+  // The "Hottie on the pitch" card only makes sense when a match is actually
+  // live AND one of the AI-supplied hot players belongs to one of the two
+  // teams currently on the pitch. Otherwise we hide the card entirely.
+  const livePlayingHottie = liveMatch
+    ? livePlayersRaw.find(
+        (p) =>
+          p.isPlayingLive &&
+          (p.country?.toLowerCase() === liveMatch.home.name.toLowerCase() ||
+            p.country?.toLowerCase() === liveMatch.away.name.toLowerCase()),
+      )
+    : undefined;
   const goPrev = () => setPlayerIdx((i) => (i - 1 + filteredPlayers.length) % filteredPlayers.length);
   const goNext = () => setPlayerIdx((i) => (i + 1) % filteredPlayers.length);
-  useEffect(() => { setPlayerIdx(0); }, [playerFilter, livePlayersMapped.length]);
+  useEffect(() => { setPlayerIdx(0); }, [playerFilter, allPlayers.length]);
 
   useEffect(() => {
     const root = document.documentElement;
