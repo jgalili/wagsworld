@@ -18,8 +18,11 @@ export const Route = createFileRoute("/")({
 const FINAL_DATE = new Date("2026-07-19T22:00:00Z");
 
 function useCountdown(target: Date) {
-  const [now, setNow] = useState(() => Date.now());
+  // Start at target so SSR + first client render both produce 00:00:00:00 and
+  // hydration matches; then tick on the client.
+  const [now, setNow] = useState<number>(() => target.getTime());
   useEffect(() => {
+    setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
@@ -52,11 +55,14 @@ function relativeWhen(iso: string, lang: Lang) {
 }
 
 function useAgo(ts: number) {
-  const [now, setNow] = useState(() => Date.now());
+  // Start at ts so SSR + first client render both produce 0s and hydration
+  // matches; then tick on the client.
+  const [now, setNow] = useState<number>(() => ts);
   useEffect(() => {
+    setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [ts]);
   return Math.max(0, Math.floor((now - ts) / 1000));
 }
 
@@ -373,6 +379,47 @@ function Index() {
   const intel = intelQuery.data;
   const intelAgo = useAgo(intel?.fetchedAt ?? Date.now());
 
+  // Live-updated content pulled from the AI feed (falls back to i18n static
+  // arrays when the feed hasn't loaded yet).
+  const liveMicro: readonly string[] = intel?.microTips?.length
+    ? intel.microTips.map((m) => (isHe ? m.he : m.en))
+    : t.micro;
+  const liveOdds = intel?.odds?.length
+    ? intel.odds.map((o) => ({
+        team: o.team,
+        label: isHe ? o.team_he || o.team : o.team,
+        pct: o.pct,
+      }))
+    : [
+        { team: "France", label: t.teams.France, pct: 24 },
+        { team: "Brazil", label: t.teams.Brazil, pct: 21 },
+        { team: "Argentina", label: t.teams.Argentina, pct: 18 },
+        { team: "England", label: t.teams.England, pct: 14 },
+        { team: "Spain", label: t.teams.Spain, pct: 11 },
+      ];
+  const livePeace = intel?.peaceForecast?.length
+    ? intel.peaceForecast.map((p) => ({
+        slot: isHe ? p.slot_he || p.slot : p.slot,
+        note: isHe ? p.note_he || p.note : p.note,
+        level: p.level,
+      }))
+    : t.peace.map((p) => ({ slot: p.slot, note: p.note, level: p.level }));
+  const liveProTip1 = intel?.proTips?.[0]
+    ? {
+        label: isHe ? intel.proTips[0].label_he : intel.proTips[0].label,
+        text: isHe ? intel.proTips[0].text_he : intel.proTips[0].text,
+      }
+    : { label: t.proTip, text: t.proTipText };
+  const liveProTip2 = intel?.proTips?.[1]
+    ? {
+        label: isHe ? intel.proTips[1].label_he : intel.proTips[1].label,
+        text: isHe ? intel.proTips[1].text_he : intel.proTips[1].text,
+      }
+    : { label: t.proTip2, text: t.proTipText2 };
+  const liveFake: readonly string[] = intel?.fakeLines?.length
+    ? intel.fakeLines.map((f) => (isHe ? f.he : f.en))
+    : t.fake;
+
   // Hot Player carousel
   const playerImages = [player1, player2, player3, player4];
   const [playerFilter, setPlayerFilter] = useState<"week" | "last">("week");
@@ -501,7 +548,7 @@ function Index() {
       {/* Ticker */}
       <div dir="ltr" className="relative z-10 max-w-7xl mx-auto mb-8 border-y border-border py-2 overflow-hidden backdrop-blur-sm bg-background/30">
         <div className="flex gap-12 whitespace-nowrap animate-[marquee_45s_linear_infinite] font-mono text-[11px] uppercase tracking-widest">
-          {[...t.micro, ...t.micro].map((n, i) => (
+          {[...liveMicro, ...liveMicro].map((n, i) => (
             <span key={i} className="inline-flex items-center gap-3">
               <span className="size-1.5 rounded-full bg-primary animate-[pulseRed_1.5s_infinite]" />
               {n}
@@ -562,7 +609,7 @@ function Index() {
               {t.microTitle}
             </h2>
             <div className="space-y-4">
-              {t.micro.map((n, i) => (
+              {liveMicro.map((n, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, x: isHe ? 12 : -12 }}
@@ -585,13 +632,7 @@ function Index() {
               {t.oddsTitle}
             </h2>
             <div className="space-y-5">
-              {[
-                { team: "France", pct: 24 },
-                { team: "Brazil", pct: 21 },
-                { team: "Argentina", pct: 18 },
-                { team: "England", pct: 14 },
-                { team: "Spain", pct: 11 },
-              ].map((o, i) => (
+              {liveOdds.map((o, i) => (
                 <div key={o.team} className="flex items-center gap-4 group">
                   <span className="w-12 font-mono text-xs text-muted-foreground tabular-nums">
                     {o.pct}%
@@ -605,7 +646,7 @@ function Index() {
                     />
                   </div>
                   <span className="text-sm font-semibold uppercase tracking-tight w-20 text-right rtl:text-left group-hover:text-primary transition-colors">
-                    {t.teams[o.team] ?? o.team}
+                    {o.label}
                   </span>
                 </div>
               ))}
@@ -617,7 +658,7 @@ function Index() {
               {t.peaceTitle}
             </h2>
             <div className="space-y-4">
-              {t.peace.map((p) => (
+              {livePeace.map((p) => (
                 <motion.div
                   key={p.slot}
                   whileHover={{ x: isHe ? -4 : 4 }}
@@ -970,10 +1011,10 @@ function Index() {
               className="p-6 border-2 border-primary rounded-sm bg-primary/5 shadow-[0_0_40px_-10px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
             >
               <p className="font-mono text-[10px] uppercase text-primary font-bold mb-2">
-                {t.proTip}
+                {liveProTip1.label}
               </p>
               <p className="text-sm leading-snug font-medium italic">
-                {t.proTipText}
+                {liveProTip1.text}
               </p>
             </motion.div>
 
@@ -982,10 +1023,10 @@ function Index() {
               className="p-6 border-2 border-primary/70 rounded-sm bg-primary/5 shadow-[0_0_40px_-10px_color-mix(in_oklab,var(--primary)_50%,transparent)]"
             >
               <p className="font-mono text-[10px] uppercase text-primary font-bold mb-2">
-                {t.proTip2}
+                {liveProTip2.label}
               </p>
               <p className="text-sm leading-snug font-medium italic">
-                {t.proTipText2}
+                {liveProTip2.text}
               </p>
             </motion.div>
 
@@ -994,7 +1035,7 @@ function Index() {
                 {t.fakeKit}
               </p>
               <ul className="text-xs space-y-2 text-muted-foreground">
-                {t.fake.map((f, i) => (
+                {liveFake.map((f, i) => (
                   <li key={i} className="hover:text-primary transition-colors cursor-default">&mdash; {f}</li>
                 ))}
               </ul>

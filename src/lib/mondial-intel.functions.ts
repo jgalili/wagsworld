@@ -61,6 +61,18 @@ export type HotPlayerLive = {
   match: string; // e.g. "vs Croatia" or "LIVE vs Portugal"
 };
 
+export type MicroTip = { en: string; he: string };
+export type OddsRow = { team: string; team_he: string; pct: number };
+export type PeaceSlot = {
+  slot: string;
+  slot_he: string;
+  note: string;
+  note_he: string;
+  level: "critical" | "safe";
+};
+export type ProTip = { label: string; label_he: string; text: string; text_he: string };
+export type FakeLine = { en: string; he: string };
+
 export type MondialIntel = {
   fetchedAt: number;
   markets: BettingMarket[];
@@ -68,6 +80,11 @@ export type MondialIntel = {
   drops: JuicyDrop[];
   gossip: GossipItem[];
   hotPlayers: HotPlayerLive[];
+  microTips: MicroTip[];
+  odds: OddsRow[];
+  peaceForecast: PeaceSlot[];
+  proTips: ProTip[];
+  fakeLines: FakeLine[];
   totalWageredUsd: number;
   polymarketOnline: boolean;
 };
@@ -83,6 +100,11 @@ Return STRICT JSON, no prose, matching this TypeScript type:
   "drops": Array<{ "headline": string, "headline_he": string, "source": string, "sourceUrl": string, "minutesAgo": number, "tag": "SCANDAL"|"INJURY"|"DRAMA"|"MONEY"|"OFF-PITCH" }>, // 5 items
   "gossip": Array<{ "player": string, "country": string, "headline": string, "headline_he": string, "caption": string, "caption_he": string, "verdict": "HIT"|"MISS"|"CHAOS", "source": string, "sourceUrl": string, "imageSeed": string, "minutesAgo": number }>, // 6 items — fashion / red carpet / airport looks / off-pitch outfit hits & misses in the last 72h
   "hotPlayers": Array<{ "name": string, "country": string, "role": string, "blurb": string, "blurb_he": string, "socialTeaser": string, "socialTeaser_he": string, "socialUrl": string, "imageSeed": string, "score": string, "hoursAgo": number, "isPlayingLive": boolean, "match": string }>, // 8 items — current hottest players. If a match is happening RIGHT NOW at the current UTC time based on real 2026 World Cup schedule, mark ONE hot player from a team playing right now as isPlayingLive:true. Otherwise ALL isPlayingLive:false. Sort most-recent first (hoursAgo ascending).
+  "microTips": Array<{ "en": string, "he": string }>, // 5 dry one-liners for a scrolling ticker. Each MUST name a team/country and a specific player/coach/incident. Max 110 chars.
+  "odds": Array<{ "team": string, "team_he": string, "pct": number }>, // 5 items, biggest title-win probabilities right now. Integers, sum roughly 60-90. Sorted desc.
+  "peaceForecast": Array<{ "slot": string, "slot_he": string, "note": string, "note_he": string, "level": "critical"|"safe" }>, // 4 items — upcoming days/times with a dry note about household chaos. slot like "Thu 20:00".
+  "proTips": Array<{ "label": string, "label_he": string, "text": string, "text_he": string }>, // 2 sardonic survival tips. label like "Pro Survival Tip", text quoted, max 140 chars.
+  "fakeLines": Array<{ "en": string, "he": string }>, // 3 quoted "sounds-smart" football lines to drop in conversation.
   "totalWageredUsd": number
 }
 
@@ -442,6 +464,35 @@ const FALLBACK: Omit<MondialIntel, "fetchedAt" | "polymarketOnline"> = {
       match: "vs Poland",
     },
   ],
+  microTips: [
+    { en: "Brazil's star winger dyed his hair again; use this to pretend you've been watching.", he: "הכוכב של ברזיל צבע שוב את השיער. תשתמשי בזה כדי להעמיד פנים שצפית." },
+    { en: "VAR is currently the enemy of joy. Nod and sigh when someone mentions 'replays'.", he: "ה-VAR הוא כרגע אויב השמחה. תהנהני ותאנחי כשמישהו מזכיר 'שידור חוזר'." },
+    { en: "France's main striker drinks herbal tea. Vital leverage for your next argument.", he: "החלוץ המרכזי של צרפת שותה תה צמחים. מנוף חיוני לוויכוח הבא שלך." },
+    { en: "Morocco is the sentimental favorite. Praising them is socially free real estate.", he: "מרוקו היא המועדפת הסנטימנטלית. לשבח אותה זה נדל\"ן חברתי חינם." },
+    { en: "England looked 'fine, actually'. Which, for England fans, counts as a crisis.", he: "אנגליה נראתה 'בסדר, האמת'. שזה, לאוהדי אנגליה, נחשב למשבר." },
+  ],
+  odds: [
+    { team: "France", team_he: "צרפת", pct: 24 },
+    { team: "Brazil", team_he: "ברזיל", pct: 21 },
+    { team: "Argentina", team_he: "ארגנטינה", pct: 18 },
+    { team: "England", team_he: "אנגליה", pct: 14 },
+    { team: "Spain", team_he: "ספרד", pct: 11 },
+  ],
+  peaceForecast: [
+    { slot: "Tues 18:00", slot_he: "שלישי 18:00", note: "Likely shouting & spilled beer", note_he: "צעקות ובירה שנשפכת", level: "critical" },
+    { slot: "Wed 14:00", slot_he: "רביעי 14:00", note: "Productive apathy", note_he: "אדישות פרודוקטיבית", level: "safe" },
+    { slot: "Thu 20:00", slot_he: "חמישי 20:00", note: "Semi-final: brace for tears", note_he: "חצי גמר: היכוני לדמעות", level: "critical" },
+    { slot: "Fri 12:00", slot_he: "שישי 12:00", note: "No matches. Actual daylight.", note_he: "אין משחקים. אור יום ממשי.", level: "safe" },
+  ],
+  proTips: [
+    { label: "Pro Survival Tip", label_he: "טיפ הישרדות מקצועי", text: "\"When they say 'False Nine', just nod. Don't ask what it means. Nobody actually knows.\"", text_he: "\"כשאומרים 'תשע כוזב', פשוט תהנהני. אל תשאלי מה זה. אף אחד באמת לא יודע.\"" },
+    { label: "Pro Survival Tip #2", label_he: "טיפ הישרדות מקצועי #2", text: "\"If he mentions 'xG' three times in one sentence, pour yourself a glass of wine and tune out.\"", text_he: "\"אם הוא מזכיר 'xG' שלוש פעמים במשפט אחד, מזגי לך כוס יין ותנתקי.\"" },
+  ],
+  fakeLines: [
+    { en: "\"Their midfield press is a mess.\"", he: "\"הלחיצה שלהם בקישור בלגן מוחלט.\"" },
+    { en: "\"Honestly? Give me a proper number nine.\"", he: "\"בכנות? תני לי חלוץ מספר תשע אמיתי.\"" },
+    { en: "\"You can't defend that with three at the back.\"", he: "\"אי אפשר להתגונן עם שלושה מאחור.\"" },
+  ],
 };
 
 export const getMondialIntel = createServerFn({ method: "GET" }).handler(
@@ -544,6 +595,16 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
           if (a.isPlayingLive !== b.isPlayingLive) return a.isPlayingLive ? -1 : 1;
           return (a.hoursAgo ?? 999) - (b.hoursAgo ?? 999);
         });
+      const microTips = ((parsed.microTips ?? []) as MicroTip[])
+        .filter((m) => m && m.en && m.he).slice(0, 5);
+      const odds = ((parsed.odds ?? []) as OddsRow[])
+        .filter((o) => o && o.team && typeof o.pct === "number").slice(0, 5);
+      const peaceForecast = ((parsed.peaceForecast ?? []) as PeaceSlot[])
+        .filter((p) => p && p.slot && p.note).slice(0, 4);
+      const proTips = ((parsed.proTips ?? []) as ProTip[])
+        .filter((p) => p && p.text && p.text_he).slice(0, 2);
+      const fakeLines = ((parsed.fakeLines ?? []) as FakeLine[])
+        .filter((f) => f && f.en && f.he).slice(0, 3);
       return {
         fetchedAt: now,
         polymarketOnline,
@@ -556,6 +617,11 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
         drops,
         gossip: gossip.length ? gossip : FALLBACK.gossip,
         hotPlayers: hotPlayers.length ? hotPlayers : FALLBACK.hotPlayers,
+        microTips: microTips.length ? microTips : FALLBACK.microTips,
+        odds: odds.length ? odds : FALLBACK.odds,
+        peaceForecast: peaceForecast.length ? peaceForecast : FALLBACK.peaceForecast,
+        proTips: proTips.length === 2 ? proTips : FALLBACK.proTips,
+        fakeLines: fakeLines.length ? fakeLines : FALLBACK.fakeLines,
       };
     } catch {
       return { ...FALLBACK, fetchedAt: now, polymarketOnline };
