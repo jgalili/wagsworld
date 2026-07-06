@@ -947,8 +947,8 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
       polymarketOnline = false;
     }
 
-    // Ground the AI in real ESPN data so it doesn't invent teams/players
-    // that are already eliminated.
+    // Ground every visible section in real ESPN data first. The AI can add
+    // color, but standings-sensitive widgets come from this deterministic block.
     const ymd = (d: Date) => {
       const y = d.getUTCFullYear();
       const m = String(d.getUTCMonth() + 1).padStart(2, "0");
@@ -957,6 +957,7 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
     };
     const start = ymd(new Date(now - 5 * 86_400_000));
     const end = ymd(new Date(now + 7 * 86_400_000));
+    let groundedMatches: GroundedMatch[] = [];
     let liveTeams: string[] = [];
     let upcomingTeams: string[] = [];
     let recentResults: string[] = [];
@@ -969,8 +970,9 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
       if (scb.ok) {
         const data = (await scb.json()) as {
           events?: Array<{
+            date: string;
             competitions: Array<{
-              status: { type: { state: string; completed?: boolean } };
+              status: { displayClock?: string; type: { state: string; detail?: string; shortDetail?: string; completed?: boolean } };
               competitors: Array<{
                 homeAway: "home" | "away";
                 score?: string;
@@ -985,27 +987,41 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
         for (const e of events) {
           const c = e.competitions?.[0];
           if (!c) continue;
-          const st = c.status.type.state;
+          const st = c.status.type.state as GroundedMatch["state"];
           const home = c.competitors.find((x) => x.homeAway === "home");
           const away = c.competitors.find((x) => x.homeAway === "away");
           if (!home || !away) continue;
-          const hn = home.team.displayName;
-          const an = away.team.displayName;
+          const hn = canonicalTeam(home.team.displayName);
+          const an = canonicalTeam(away.team.displayName);
           const slug = e.season?.slug ?? "";
           const isKnockout = /round-of|quarter|semi|final/i.test(slug);
+          const hs = Number(home.score ?? "0");
+          const as = Number(away.score ?? "0");
+          const winner =
+            home.winner === true ? hn : away.winner === true ? an : st === "post" && hs > as ? hn : st === "post" && as > hs ? an : undefined;
+          const loser = winner === hn ? an : winner === an ? hn : undefined;
+          groundedMatches.push({
+            kickoffISO: e.date,
+            state: st,
+            home: hn,
+            away: an,
+            homeScore: hs,
+            awayScore: as,
+            minute: c.status.displayClock || c.status.type.shortDetail,
+            detail: c.status.type.detail ?? c.status.type.shortDetail ?? "",
+            phase: slug.replace(/-/g, " ") || "world cup",
+            winner,
+            loser,
+            isKnockout,
+          });
           if (st === "in") {
             liveTeams.push(hn, an);
           } else if (st === "pre") {
             upcomingTeams.push(hn, an);
           } else if (st === "post") {
-            const hs = Number(home.score ?? "0");
-            const as = Number(away.score ?? "0");
             recentResults.push(`${hn} ${hs}-${as} ${an}`);
             if (isKnockout) {
-              if (home.winner === true) eliminatedTeams.push(an);
-              else if (away.winner === true) eliminatedTeams.push(hn);
-              else if (hs > as) eliminatedTeams.push(an);
-              else if (as > hs) eliminatedTeams.push(hn);
+              if (loser) eliminatedTeams.push(loser);
             }
           }
         }
@@ -1013,13 +1029,31 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
     } catch {
       // best-effort — fall through with empty context
     }
-    liveTeams = Array.from(new Set(liveTeams));
-    upcomingTeams = Array.from(new Set(upcomingTeams));
-    eliminatedTeams = Array.from(new Set(eliminatedTeams));
-    const stillActive = Array.from(new Set([...liveTeams, ...upcomingTeams]));
+    groundedMatches = groundedMatches.sort((a, b) => a.kickoffISO.localeCompare(b.kickoffISO));
+    const liveMatches = groundedMatches.filter((m) => m.state === "in");
+    const upcomingMatches = groundedMatches.filter((m) => m.state === "pre");
+    const recentMatches = groundedMatches
+      .filter((m) => m.state === "post")
+      .sort((a, b) => b.kickoffISO.localeCompare(a.kickoffISO));
+    liveTeams = uniq(liveTeams).filter((team) => !isPlaceholderTeam(team));
+    upcomingTeams = uniq(upcomingTeams).filter((team) => !isPlaceholderTeam(team));
+    eliminatedTeams = uniq(eliminatedTeams).filter((team) => !isPlaceholderTeam(team));
+    const stillActive = uniq([...liveTeams, ...upcomingTeams]).filter(
+      (team) => !isPlaceholderTeam(team) && !eliminatedTeams.map((t) => t.toLowerCase()).includes(team.toLowerCase()),
+    );
+    const groundedMicroTips = buildLiveMicroTips(liveMatches, upcomingMatches, recentMatches);
+    const groundedOdds = buildLiveOdds(liveMatches, upcomingMatches, eliminatedTeams);
+    const groundedHotPlayers = await attachHotPlayerImages(buildLiveHotPlayers(liveMatches, upcomingMatches));
 
     if (!apiKey) {
-      return { ...FALLBACK, fetchedAt: now, polymarketOnline };
+      return {
+        ...FALLBACK,
+        fetchedAt: now,
+        polymarketOnline,
+        microTips: groundedMicroTips.length ? groundedMicroTips : [],
+        odds: groundedOdds,
+        hotPlayers: groundedHotPlayers,
+      };
     }
 
     const groundingBlock = `LIVE_CONTEXT (from ESPN, ${new Date(now).toISOString()}):
