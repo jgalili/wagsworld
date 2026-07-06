@@ -732,7 +732,7 @@ function Index() {
             </div>
           </div>
 
-          {current && (
+          {current ? (
             <motion.div
               key={`${playerFilter}-${safeIdx}`}
               initial={{ opacity: 0, y: 20 }}
@@ -781,10 +781,16 @@ function Index() {
                 </div>
               </div>
             </motion.div>
+          ) : (
+            <div className="min-h-[420px] border border-border rounded-sm bg-surface/30 flex items-center justify-center p-8 text-center">
+              <p className="max-w-[30ch] text-sm italic text-muted-foreground">
+                Live player photos are loading from verified sources. No placeholders, no scenery, no fake hotties.
+              </p>
+            </div>
           )}
 
           {/* Carousel controls */}
-          <div className="mt-6 flex items-center justify-between gap-4">
+          {filteredPlayers.length > 0 && <div className="mt-6 flex items-center justify-between gap-4">
             <button
               onClick={goPrev}
               className="font-mono text-[11px] uppercase tracking-widest border border-border hover:border-primary hover:text-primary rounded-full px-4 py-2 transition-colors"
@@ -809,10 +815,10 @@ function Index() {
             >
               {t.nextLabel} →
             </button>
-          </div>
+          </div>}
 
           {/* Thumbnail rail */}
-          <div className="mt-6 grid grid-cols-4 gap-2">
+          {filteredPlayers.length > 0 && <div className="mt-6 grid grid-cols-4 gap-2">
             {filteredPlayers.map((p, i) => (
               <button
                 key={i}
@@ -824,7 +830,7 @@ function Index() {
                 <img src={p._img} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
               </button>
             ))}
-          </div>
+          </div>}
         </motion.div>
 
         {/* RIGHT: fixtures + tip */}
