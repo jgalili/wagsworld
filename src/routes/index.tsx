@@ -924,8 +924,9 @@ function Index() {
             </motion.section>
           )}
 
-          {/* Live Hottie On The Pitch — only when a match is actually LIVE */}
-          {liveMatch && (
+          {/* Live Hottie On The Pitch — only when a match is LIVE AND we have
+              a real player from one of the two teams currently on the pitch. */}
+          {liveMatch && livePlayingHottie && livePlayingHottie.imageUrl && (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -934,10 +935,8 @@ function Index() {
           >
             <div className="relative aspect-[4/3] overflow-hidden">
               <img
-                src={livePlayingHottie
-                  ? `https://picsum.photos/seed/${encodeURIComponent(livePlayingHottie.imageSeed)}/600/450`
-                  : player3}
-                alt={livePlayingHottie?.name ?? t.liveHottie.name}
+                src={livePlayingHottie.imageUrl}
+                alt={livePlayingHottie.name}
                 className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700 scale-105 hover:scale-100"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
