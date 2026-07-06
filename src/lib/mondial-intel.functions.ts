@@ -670,7 +670,14 @@ CRITICAL GROUNDING RULES:
             ? it.sourceUrl
             : gs(`${it.player ?? ""} ${it.country ?? ""} outfit tunnel`),
       }));
-      const hotPlayers = ((parsed.hotPlayers ?? []).slice(0, 8) as HotPlayerLive[])
+      const eliminatedSet = new Set(eliminatedTeams.map((t) => t.toLowerCase()));
+      const liveSet = new Set(liveTeams.map((t) => t.toLowerCase()));
+      const activeSet = new Set(stillActive.map((t) => t.toLowerCase()));
+      const isEliminated = (country?: string) =>
+        !!country && eliminatedSet.has(country.toLowerCase());
+
+      const hotPlayersFiltered = ((parsed.hotPlayers ?? []).slice(0, 12) as HotPlayerLive[])
+        .filter((p) => p && p.name && !isEliminated(p.country))
         .map((p) => ({
           ...p,
           imageSeed: slug(p.imageSeed || `${p.name ?? "player"}-${p.country ?? ""}`),
@@ -678,21 +685,81 @@ CRITICAL GROUNDING RULES:
             p.socialUrl && p.socialUrl.startsWith("http")
               ? p.socialUrl
               : gw(`${p.name ?? ""} ${p.country ?? ""} instagram`),
+          // Force correct isPlayingLive: only true when that country is actually on the pitch RIGHT NOW.
+          isPlayingLive: !!p.isPlayingLive && liveSet.has((p.country ?? "").toLowerCase()),
         }))
+        .slice(0, 8)
         .sort((a, b) => {
           if (a.isPlayingLive !== b.isPlayingLive) return a.isPlayingLive ? -1 : 1;
           return (a.hoursAgo ?? 999) - (b.hoursAgo ?? 999);
         });
+
+      // Resolve real player photos from Wikipedia in parallel.
+      const wikiThumb = async (name: string): Promise<string | undefined> => {
+        if (!name) return undefined;
+        try {
+          const r = await fetch(
+            `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name.replace(/\s+/g, "_"))}`,
+            { signal: AbortSignal.timeout(2500), headers: { accept: "application/json" } },
+          );
+          if (!r.ok) return undefined;
+          const j = (await r.json()) as {
+            originalimage?: { source?: string };
+            thumbnail?: { source?: string };
+            type?: string;
+          };
+          if (j.type === "disambiguation") return undefined;
+          return j.originalimage?.source ?? j.thumbnail?.source;
+        } catch {
+          return undefined;
+        }
+      };
+      const hotPlayers = await Promise.all(
+        hotPlayersFiltered.map(async (p) => ({ ...p, imageUrl: await wikiThumb(p.name) })),
+      );
+
+      const gossipFiltered = ((parsed.gossip ?? []).slice(0, 8) as GossipItem[])
+        .filter((it) => it && it.player && !isEliminated(it.country))
+        .map((it) => ({
+          ...it,
+          imageSeed: slug(it.imageSeed || `${it.player ?? "player"}-${it.country ?? ""}`),
+          sourceUrl:
+            it.sourceUrl && it.sourceUrl.startsWith("http")
+              ? it.sourceUrl
+              : gs(`${it.player ?? ""} ${it.country ?? ""} outfit tunnel`),
+        }))
+        .slice(0, 6);
+      const gossipWithImages = await Promise.all(
+        gossipFiltered.map(async (it) => ({ ...it, imageUrl: await wikiThumb(it.player) })),
+      );
+
       const microTips = ((parsed.microTips ?? []) as MicroTip[])
         .filter((m) => m && m.en && m.he).slice(0, 5);
-      const odds = ((parsed.odds ?? []) as OddsRow[])
-        .filter((o) => o && o.team && typeof o.pct === "number").slice(0, 5);
+      let odds = ((parsed.odds ?? []) as OddsRow[])
+        .filter(
+          (o) =>
+            o &&
+            o.team &&
+            typeof o.pct === "number" &&
+            !eliminatedSet.has(o.team.toLowerCase()),
+        )
+        .slice(0, 5);
+      // If we know the active set, also drop odds rows for teams that aren't in it (extra safety).
+      if (activeSet.size > 0) {
+        const filtered = odds.filter((o) => activeSet.has(o.team.toLowerCase()));
+        if (filtered.length >= 3) odds = filtered;
+      }
       const peaceForecast = ((parsed.peaceForecast ?? []) as PeaceSlot[])
         .filter((p) => p && p.slot && p.note).slice(0, 4);
       const proTips = ((parsed.proTips ?? []) as ProTip[])
         .filter((p) => p && p.text && p.text_he).slice(0, 2);
       const fakeLines = ((parsed.fakeLines ?? []) as FakeLine[])
         .filter((f) => f && f.en && f.he).slice(0, 3);
+
+      // Fallback odds: strip any eliminated teams from the built-in list too.
+      const safeFallbackOdds = FALLBACK.odds.filter(
+        (o) => !eliminatedSet.has(o.team.toLowerCase()),
+      );
       return {
         fetchedAt: now,
         polymarketOnline,
@@ -703,10 +770,10 @@ CRITICAL GROUNDING RULES:
         markets,
         winners,
         drops,
-        gossip: gossip.length ? gossip : FALLBACK.gossip,
+        gossip: gossipWithImages.length ? gossipWithImages : FALLBACK.gossip,
         hotPlayers: hotPlayers.length ? hotPlayers : FALLBACK.hotPlayers,
         microTips: microTips.length ? microTips : FALLBACK.microTips,
-        odds: odds.length ? odds : FALLBACK.odds,
+        odds: odds.length ? odds : (safeFallbackOdds.length ? safeFallbackOdds : FALLBACK.odds),
         peaceForecast: peaceForecast.length ? peaceForecast : FALLBACK.peaceForecast,
         proTips: proTips.length === 2 ? proTips : FALLBACK.proTips,
         fakeLines: fakeLines.length ? fakeLines : FALLBACK.fakeLines,
