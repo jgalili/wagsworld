@@ -1152,26 +1152,6 @@ CRITICAL GROUNDING RULES:
           return (a.hoursAgo ?? 999) - (b.hoursAgo ?? 999);
         });
 
-      // Resolve real player photos from Wikipedia in parallel.
-      const wikiThumb = async (name: string): Promise<string | undefined> => {
-        if (!name) return undefined;
-        try {
-          const r = await fetch(
-            `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name.replace(/\s+/g, "_"))}`,
-            { signal: AbortSignal.timeout(2500), headers: { accept: "application/json" } },
-          );
-          if (!r.ok) return undefined;
-          const j = (await r.json()) as {
-            originalimage?: { source?: string };
-            thumbnail?: { source?: string };
-            type?: string;
-          };
-          if (j.type === "disambiguation") return undefined;
-          return j.originalimage?.source ?? j.thumbnail?.source;
-        } catch {
-          return undefined;
-        }
-      };
       const hotPlayers = await Promise.all(
         hotPlayersFiltered.map(async (p) => ({ ...p, imageUrl: await wikiThumb(p.name) })),
       );
@@ -1229,15 +1209,23 @@ CRITICAL GROUNDING RULES:
         winners,
         drops,
         gossip: gossipWithImages.length ? gossipWithImages : FALLBACK.gossip,
-        hotPlayers: hotPlayers.length ? hotPlayers : FALLBACK.hotPlayers,
-        microTips: microTips.length ? microTips : FALLBACK.microTips,
-        odds: odds.length ? odds : (safeFallbackOdds.length ? safeFallbackOdds : FALLBACK.odds),
+        hotPlayers: groundedHotPlayers.length ? groundedHotPlayers : hotPlayers,
+        microTips: groundedMicroTips.length ? groundedMicroTips : microTips,
+        odds: groundedOdds.length ? groundedOdds : odds,
         peaceForecast: peaceForecast.length ? peaceForecast : FALLBACK.peaceForecast,
         proTips: proTips.length === 2 ? proTips : FALLBACK.proTips,
         fakeLines: fakeLines.length ? fakeLines : FALLBACK.fakeLines,
       };
     } catch {
-      return { ...FALLBACK, fetchedAt: now, polymarketOnline };
+      const groundedMicroTips = buildLiveMicroTips([], [], []);
+      return {
+        ...FALLBACK,
+        fetchedAt: now,
+        polymarketOnline,
+        microTips: groundedMicroTips,
+        odds: [],
+        hotPlayers: [],
+      };
     }
   },
 );
