@@ -662,14 +662,6 @@ CRITICAL GROUNDING RULES:
         sourceUrl:
           d.sourceUrl && d.sourceUrl.startsWith("http") ? d.sourceUrl : g(d.headline ?? "world cup"),
       }));
-      const gossip = ((parsed.gossip ?? []).slice(0, 6) as GossipItem[]).map((it) => ({
-        ...it,
-        imageSeed: slug(it.imageSeed || `${it.player ?? "player"}-${it.country ?? ""}`),
-        sourceUrl:
-          it.sourceUrl && it.sourceUrl.startsWith("http")
-            ? it.sourceUrl
-            : gs(`${it.player ?? ""} ${it.country ?? ""} outfit tunnel`),
-      }));
       const eliminatedSet = new Set(eliminatedTeams.map((t) => t.toLowerCase()));
       const liveSet = new Set(liveTeams.map((t) => t.toLowerCase()));
       const activeSet = new Set(stillActive.map((t) => t.toLowerCase()));
