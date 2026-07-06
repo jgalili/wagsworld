@@ -4,10 +4,6 @@ import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
 import { getMondialIntel } from "@/lib/mondial-intel.functions";
 import { getMondialLive, type LiveMatch } from "@/lib/mondial-live.functions";
-import player1 from "@/assets/player-1.jpg";
-import player2 from "@/assets/player-2.jpg";
-import player3 from "@/assets/player-3.jpg";
-import player4 from "@/assets/player-4.jpg";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -445,7 +441,6 @@ function Index() {
     : t.fake;
 
   // Hot Player carousel
-  const playerImages = [player1, player2, player3, player4];
   const [playerFilter, setPlayerFilter] = useState<"week" | "last">("week");
   const [playerIdx, setPlayerIdx] = useState(0);
 
@@ -470,18 +465,8 @@ function Index() {
     _hasRealImg: !!p.imageUrl,
     _rank: i + 1,
   }));
-  const staticMapped = t.players.map((p, i) => ({
-    ...p,
-    role: "",
-    socialTeaser: "",
-    socialUrl: "",
-    isPlayingLive: false,
-    _img: playerImages[i % playerImages.length],
-    _hasRealImg: true,
-    _rank: i + 1,
-  }));
   // Only use AI players that actually resolved to a real photo. Otherwise
-  // fall back to the curated static list — no more scenery placeholders.
+  // show a loading/empty state — no stale invented names or scenery images.
   const livePlayersWithImgs = livePlayersMapped.filter((p) => p._hasRealImg);
   const allPlayers = livePlayersWithImgs.length ? livePlayersWithImgs : [];
   const filteredPlayersBase = allPlayers.filter((p) =>
