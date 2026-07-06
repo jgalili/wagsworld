@@ -370,7 +370,8 @@ function Index() {
     staleTime: 0,
     gcTime: 0,
     refetchOnMount: "always",
-    refetchOnWindowFocus: false,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
   });
   const intel = intelQuery.data;
   const intelAgo = useAgo(intel?.fetchedAt ?? Date.now());
