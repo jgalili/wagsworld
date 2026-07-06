@@ -556,7 +556,13 @@ async function wikiThumb(name: string): Promise<string | undefined> {
   try {
     const r = await fetch(
       `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name.replace(/\s+/g, "_"))}`,
-      { signal: AbortSignal.timeout(2500), headers: { accept: "application/json" } },
+      {
+        signal: AbortSignal.timeout(2500),
+        headers: {
+          accept: "application/json",
+          "user-agent": "WagsWorld/1.0 (https://wagsworld.lovable.app)",
+        },
+      },
     );
     if (!r.ok) return undefined;
     const j = (await r.json()) as {
