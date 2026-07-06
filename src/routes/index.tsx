@@ -1011,10 +1011,10 @@ function Index() {
               className="p-6 border-2 border-primary rounded-sm bg-primary/5 shadow-[0_0_40px_-10px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
             >
               <p className="font-mono text-[10px] uppercase text-primary font-bold mb-2">
-                {t.proTip}
+                {liveProTip1.label}
               </p>
               <p className="text-sm leading-snug font-medium italic">
-                {t.proTipText}
+                {liveProTip1.text}
               </p>
             </motion.div>
 
@@ -1023,10 +1023,10 @@ function Index() {
               className="p-6 border-2 border-primary/70 rounded-sm bg-primary/5 shadow-[0_0_40px_-10px_color-mix(in_oklab,var(--primary)_50%,transparent)]"
             >
               <p className="font-mono text-[10px] uppercase text-primary font-bold mb-2">
-                {t.proTip2}
+                {liveProTip2.label}
               </p>
               <p className="text-sm leading-snug font-medium italic">
-                {t.proTipText2}
+                {liveProTip2.text}
               </p>
             </motion.div>
 
@@ -1035,7 +1035,7 @@ function Index() {
                 {t.fakeKit}
               </p>
               <ul className="text-xs space-y-2 text-muted-foreground">
-                {t.fake.map((f, i) => (
+                {liveFake.map((f, i) => (
                   <li key={i} className="hover:text-primary transition-colors cursor-default">&mdash; {f}</li>
                 ))}
               </ul>
