@@ -548,7 +548,7 @@ function Index() {
       {/* Ticker */}
       <div dir="ltr" className="relative z-10 max-w-7xl mx-auto mb-8 border-y border-border py-2 overflow-hidden backdrop-blur-sm bg-background/30">
         <div className="flex gap-12 whitespace-nowrap animate-[marquee_45s_linear_infinite] font-mono text-[11px] uppercase tracking-widest">
-          {[...t.micro, ...t.micro].map((n, i) => (
+          {[...liveMicro, ...liveMicro].map((n, i) => (
             <span key={i} className="inline-flex items-center gap-3">
               <span className="size-1.5 rounded-full bg-primary animate-[pulseRed_1.5s_infinite]" />
               {n}
@@ -609,7 +609,7 @@ function Index() {
               {t.microTitle}
             </h2>
             <div className="space-y-4">
-              {t.micro.map((n, i) => (
+              {liveMicro.map((n, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, x: isHe ? 12 : -12 }}
@@ -632,13 +632,7 @@ function Index() {
               {t.oddsTitle}
             </h2>
             <div className="space-y-5">
-              {[
-                { team: "France", pct: 24 },
-                { team: "Brazil", pct: 21 },
-                { team: "Argentina", pct: 18 },
-                { team: "England", pct: 14 },
-                { team: "Spain", pct: 11 },
-              ].map((o, i) => (
+              {liveOdds.map((o, i) => (
                 <div key={o.team} className="flex items-center gap-4 group">
                   <span className="w-12 font-mono text-xs text-muted-foreground tabular-nums">
                     {o.pct}%
@@ -652,7 +646,7 @@ function Index() {
                     />
                   </div>
                   <span className="text-sm font-semibold uppercase tracking-tight w-20 text-right rtl:text-left group-hover:text-primary transition-colors">
-                    {t.teams[o.team] ?? o.team}
+                    {o.label}
                   </span>
                 </div>
               ))}
@@ -664,7 +658,7 @@ function Index() {
               {t.peaceTitle}
             </h2>
             <div className="space-y-4">
-              {t.peace.map((p) => (
+              {livePeace.map((p) => (
                 <motion.div
                   key={p.slot}
                   whileHover={{ x: isHe ? -4 : 4 }}
