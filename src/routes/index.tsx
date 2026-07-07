@@ -746,11 +746,19 @@ function Index() {
               className="group relative"
             >
               <div className="w-full aspect-[4/5] bg-muted rounded-sm overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700 ring-1 ring-primary/20 shadow-[0_30px_80px_-30px_color-mix(in_oklab,var(--primary)_50%,transparent)] relative">
-                <img
-                  src={current._img}
-                  alt={current.name}
-                  className="w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
-                />
+                {current._img ? (
+                  <img
+                    src={current._img}
+                    alt={current.name}
+                    className="w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 via-surface to-background">
+                    <span className="font-mono text-6xl font-bold text-primary/60 tracking-widest">
+                      {current.name.split(" ").map((s) => s[0]).join("").slice(0, 3).toUpperCase()}
+                    </span>
+                  </div>
+                )}
                 <span className="absolute top-3 left-3 rtl:left-auto rtl:right-3 font-mono text-[10px] uppercase tracking-widest bg-background/70 backdrop-blur-sm px-2 py-1 rounded-full ring-1 ring-border">
                   {t.daysAgoLabel(current.daysAgo)} · {current.match}
                 </span>
@@ -828,7 +836,13 @@ function Index() {
                   i === safeIdx ? "ring-primary ring-2 scale-105" : "ring-border grayscale opacity-60 hover:opacity-100 hover:grayscale-0"
                 }`}
               >
-                <img src={p._img} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
+                {p._img ? (
+                  <img src={p._img} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 via-surface to-background text-primary/60 font-mono text-xs font-bold">
+                    {p.name.split(" ").map((s) => s[0]).join("").slice(0, 2).toUpperCase()}
+                  </div>
+                )}
               </button>
             ))}
           </div>}
