@@ -189,127 +189,127 @@ const I18N = {
     editorialNote: "Editorial visual",
   },
   he: {
-    title: "מדריך הנבדל(ת) האינטימי",
-    edition: "גיליון 04 // כרך 3: השרידות היא המטרה",
+    title: "המדריך של הנבדלת",
+    edition: "גיליון 04 // כרך 3: העיקר לשרוד",
     countdown: "ספירה לאחור לחופש הרגשי",
-    microTitle: "מודיעין מיקרו — חובה לדעת",
+    microTitle: "מה חייבים לדעת עכשיו",
     micro: [
-      "הכוכב של ברזיל צבע שוב את השיער. תשתמשי בזה כדי להעמיד פנים שצפית.",
-      "ה-VAR הוא כרגע אויב השמחה. תהנהני ותאנחי כשמישהו מזכיר 'שידור חוזר'.",
-      "החלוץ המרכזי של צרפת שותה תה צמחים. מנוף חיוני לוויכוח הבא שלך.",
-      "מרוקו היא המועדפת הסנטימנטלית. לשבח אותה זה נדל\"ן חברתי חינם.",
-      "אנגליה נראתה 'בסדר, האמת'. שזה, לאוהדי אנגליה, נחשב למשבר.",
+      "הכוכב של ברזיל צבע שוב את השיער. תזרקי את זה לשיחה ותראי כאילו את בעניינים.",
+      "ה-VAR הרס לכולם את החיים. כשמישהו אומר 'שידור חוזר', תאנחי חזק ותסתמי.",
+      "החלוץ של צרפת שותה תה צמחים. תשמרי בצד לוויכוח הבא.",
+      "כולם באדרנלין ממרוקו. להגיד עליהם משהו טוב זה חינם ומרוויח נקודות.",
+      "אנגליה שיחקה 'לא רע'. אצל אוהדי אנגליה זה כבר משבר לאומי.",
     ],
-    oddsTitle: "סיכויי זכייה (החשודים המיידיים)",
+    oddsTitle: "סיכויי זכייה (החשודים הרגילים)",
     teams: { France: "צרפת", Brazil: "ברזיל", Argentina: "ארגנטינה", England: "אנגליה", Spain: "ספרד" } as Record<string, string>,
-    peaceTitle: "תחזית שלום הבית",
+    peaceTitle: "תחזית שלום בית",
     peace: [
-      { slot: "שלישי 18:00", note: "צעקות ובירה שנשפכת", level: "critical" as const },
-      { slot: "רביעי 14:00", note: "אדישות פרודוקטיבית", level: "safe" as const },
-      { slot: "חמישי 20:00", note: "חצי גמר: היכוני לדמעות", level: "critical" as const },
-      { slot: "שישי 12:00", note: "אין משחקים. אור יום ממשי.", level: "safe" as const },
+      { slot: "שלישי 18:00", note: "צעקות, בירה על השטיח", level: "critical" as const },
+      { slot: "רביעי 14:00", note: "רגיעה, אפשר לעשות כביסה", level: "safe" as const },
+      { slot: "חמישי 20:00", note: "חצי גמר. תכיני ממחטות.", level: "critical" as const },
+      { slot: "שישי 12:00", note: "אין משחקים. סוף סוף רואים את השמש.", level: "safe" as const },
     ],
     critical: "קריטי",
     safe: "בטוח",
-    hotTitle: "מדד השחקן החתיך",
-    hotness: "חתיכות",
+    hotTitle: "מדד החתיכים בדשא",
+    hotness: "חתיכיות",
     players: [
-      { country: "ספרד", name: "מטאו וידאל", blurb: "השיער נשאר מושלם אחרי 90 דקות של ריצות. נס של הנדסה מודרנית.", score: "9.8", daysAgo: 1, match: "נגד גרמניה" },
-      { country: "קוריאה", name: "צ'ו גיה-סונג", blurb: "שובר את האינטרנט בכל פעם שהוא נכנס. קו הלסת יכול לחתוך זכוכית.", score: "9.4", daysAgo: 2, match: "נגד אורוגוואי" },
-      { country: "צרפת", name: "תיאו לורן", blurb: "זמין רגשית באינסטגרם. בוכה אחרי כל משחק. כרגע על הדשא — בדקי את החלונית 'שידור חי'.", score: "9.1", daysAgo: 0, match: "חי נגד ארגנטינה" },
-      { country: "ארגנטינה", name: "רודריגו דה פאס", blurb: "אנרגיה כאוטית, מבנה עצמות עילית. הזעף הוא בחירה.", score: "8.7", daysAgo: 3, match: "נגד פולין" },
-      { country: "ברזיל", name: "לוקאס אנדרדה", blurb: "מחייך כמו בפרסומת לשמפו. הבקיע פעמיים בשבוע שעבר והפך למם עד יום שני.", score: "9.6", daysAgo: 6, match: "נגד סרביה" },
-      { country: "פורטוגל", name: "דיוגו וז", blurb: "עצמות לחיים מציור רנסנס. חגיגת השער הוויראלית שלו עדיין בקבוצת הוואטסאפ שלך.", score: "9.3", daysAgo: 5, match: "נגד גאנה" },
-      { country: "הולנד", name: "סבן דה פריס", blurb: "1.94, קוקו, עיניים עצובות. הוחלף בשבוע שעבר — האינטרנט לא התאושש.", score: "8.9", daysAgo: 4, match: "נגד ארה\"ב" },
-      { country: "קרואטיה", name: "מרקו פרישיץ'", blurb: "הוורידים באמות מגיע להם קטע משלהם. שני בישולים נגד יפן בשבוע שעבר.", score: "8.6", daysAgo: 7, match: "נגד יפן" },
+      { country: "ספרד", name: "מטאו וידאל", blurb: "השיער שלו מחזיק 90 דקות של ריצות. איך? לא ברור.", score: "9.8", daysAgo: 1, match: "נגד גרמניה" },
+      { country: "קוריאה", name: "צ'ו גיה-סונג", blurb: "בכל פעם שהוא נכנס למגרש האינסטגרם מתפוצץ. קו לסת שחותך.", score: "9.4", daysAgo: 2, match: "נגד אורוגוואי" },
+      { country: "צרפת", name: "תיאו לורן", blurb: "זמין רגשית בסטורי. בוכה אחרי כל משחק. כרגע על המגרש — תפתחי שידור חי.", score: "9.1", daysAgo: 0, match: "חי נגד ארגנטינה" },
+      { country: "ארגנטינה", name: "רודריגו דה פאס", blurb: "אנרגיה מבולגנת, עצמות של מגזין. הזעפים? מכוונים.", score: "8.7", daysAgo: 3, match: "נגד פולין" },
+      { country: "ברזיל", name: "לוקאס אנדרדה", blurb: "חיוך של פרסומת לשמפו. הבקיע פעמיים בשבוע שעבר, היה מם עד יום שני.", score: "9.6", daysAgo: 6, match: "נגד סרביה" },
+      { country: "פורטוגל", name: "דיוגו וז", blurb: "עצמות לחיים מציור רנסנס. חגיגת השער שלו עדיין רצה בוואטסאפ המשפחתי.", score: "9.3", daysAgo: 5, match: "נגד גאנה" },
+      { country: "הולנד", name: "סבן דה פריס", blurb: "1.94, קוקו, עיניים עצובות. הוציאו אותו בשבוע שעבר — הרשת עוד בשוק.", score: "8.9", daysAgo: 4, match: "נגד ארה\"ב" },
+      { country: "קרואטיה", name: "מרקו פרישיץ'", blurb: "לוורידים באמות מגיע פוסט משלהם. שני בישולים נגד יפן בשבוע שעבר.", score: "8.6", daysAgo: 7, match: "נגד יפן" },
     ],
     filterThisWeek: "השבוע",
-    filterLastWeek: "7 ימים אחרונים",
+    filterLastWeek: "השבוע שעבר",
     prevLabel: "הקודם", nextLabel: "הבא",
     daysAgoLabel: (n: number) => n === 0 ? "היום" : n === 1 ? "לפני יום" : `לפני ${n} ימים`,
-    liveTitle: "כרגע על הדשא, בשידור חי",
+    liveTitle: "כרגע על המגרש",
     liveMinute: "דק'",
     livePossession: "החזקת כדור",
     liveShots: "בעיטות למסגרת",
     liveXg: "xG",
-    liveVerdict: "הכרעה: עדיין לא קרה כלום. קלאסי.",
-    liveBadge: "חי",
+    liveVerdict: "בשורה תחתונה: עדיין 0-0. איזה חידוש.",
+    liveBadge: "שידור חי",
     liveHottie: {
-      badge: "חתיך על הדשא (שידור חי)",
+      badge: "החתיך של המשחק (עכשיו על המגרש)",
       name: "תיאו לורן",
-      meta: "צרפת · #10 · על הדשא, דקה־דקה",
-      tagline: "זה שבשבילו שווה להשתיק את השדרן.",
-      looksLabel: "כרטיס הפנים",
+      meta: "צרפת · #10 · על המגרש, דקה־דקה",
+      tagline: "בשבילו שווה להשתיק את השדרן.",
+      looksLabel: "מחלקת המראה",
       looks: [
-        "תלתלים ספוגי זיעה: עלבון אישי לחוקי הפיזיקה.",
-        "עצמות לחיים חדות מספיק כדי לפתוח משלוחים.",
-        "העוויית הכאב אחרי כל תיקול? מתורגלת. וזה עובד.",
+        "התלתלים אחרי שעה של ריצה — פשוט לא הוגן.",
+        "עצמות לחיים שאפשר לפתוח איתן חבילות מהדואר.",
+        "הפרצוף הכואב אחרי כל תיקול — מתורגל, ועובד.",
       ],
-      gameLabel: "והכדורגל עצמו",
+      gameLabel: "ומהצד של הכדורגל",
       game: [
-        "רגל שמאל כמו איזמל — החילופים לרוחב שלו זו אמנות.",
-        "לוחץ על השוער בשביל הכיף. כאוטי. אפקטיבי.",
-        "מומחה לבעיטות חופשיות. אם זה מ־25 מטר, תרימי מבט מהטלפון.",
+        "רגל שמאל כמו סרגל — המסירות לרוחב שלו זו אומנות.",
+        "לוחץ על השוער בשביל הכיף. מבולגן, אבל עובד.",
+        "מלך הבעיטות החופשיות. אם זה מ־25 מטר, תרימי עיניים מהטלפון.",
       ],
-      watch: "לצפות: הבעיטה החופשית סביב דקה 63. המצלמה תמיד מתעכבת.",
+      watch: "לשים לב: בעיטה חופשית באזור דקה 63. המצלמה תמיד נדבקת עליו.",
     },
     updated: "עודכן",
     secondsAgo: (n: number) => `לפני ${n} שניות`,
-    viewingTitle: "צפייה אופטימלית",
-    optimalWindow: "חלון אופטימלי:",
+    viewingTitle: "מתי בכלל שווה לצפות",
+    optimalWindow: "שווה לצפות ב:",
     fixtures: [
-      { time: "16:00 GMT", when: "מחר", match: "מרוקו נגד בלגיה", window: "12 הדקות האחרונות. אז הדרמה בשיאה. דלגי על השאר." },
-      { time: "20:00 GMT", when: "מחר", match: "גרמניה נגד ספרד", window: "20 הדקות הראשונות למבטי ההמנון, ואז לכי לקרוא ספר עד הסוף." },
-      { time: "19:30 GMT", when: "חמישי", match: "צרפת נגד ארגנטינה", window: "דלגי. זה ילך לפנדלים. זה תמיד הולך לפנדלים." },
+      { time: "16:00 GMT", when: "מחר", match: "מרוקו נגד בלגיה", window: "רק 12 הדקות האחרונות. שם כל הדרמה. את השאר דלגי." },
+      { time: "20:00 GMT", when: "מחר", match: "גרמניה נגד ספרד", window: "20 הדקות הראשונות בשביל ההמנון, ואז לכי לקרוא ספר." },
+      { time: "19:30 GMT", when: "חמישי", match: "צרפת נגד ארגנטינה", window: "אין טעם. זה יגמר בפנדלים. תמיד גומר בפנדלים." },
     ],
-    proTip: "טיפ הישרדות מקצועי",
-    proTipText: "\"כשאומרים 'תשע כוזב', פשוט תהנהני. אל תשאלי מה זה. אף אחד באמת לא יודע.\"",
-    proTip2: "טיפ הישרדות מקצועי #2",
-    proTipText2: "\"אם הוא מזכיר 'xG' שלוש פעמים במשפט אחד, מזגי לך כוס יין ותנתקי.\"",
-    fakeKit: "ערכת שיחה מזויפת",
+    proTip: "טיפ הישרדות",
+    proTipText: "\"אם מישהו זורק 'תשע כוזב', פשוט תהנהני. אל תשאלי. גם הוא לא באמת יודע.\"",
+    proTip2: "טיפ הישרדות #2",
+    proTipText2: "\"אם הוא מזכיר xG שלוש פעמים במשפט אחד, מזגי לך יין ותתנתקי.\"",
+    fakeKit: "משפטים מוכנים לזרוק",
     fake: [
-      "\"הלחיצה שלהם בקישור בלגן מוחלט.\"",
-      "\"בכנות? תני לי חלוץ מספר תשע אמיתי.\"",
-      "\"אי אפשר להתגונן עם שלושה מאחור.\"",
+      "\"הלחיצה שלהם בקישור פשוט אין.\"",
+      "\"בכנות? תני לי חלוץ מספר 9 אמיתי.\"",
+      "\"אי אפשר להגן ככה עם שלושה מאחור.\"",
     ],
-    footerLinks: ["אסטרטגיית יציאה", "מילות השתקה", "פרוטוקולי שלום"],
+    footerLinks: ["אסטרטגיית בריחה", "מילות קסם להשתיק אותו", "הסכם שלום בית"],
     dLabel: "י", hLabel: "ש", mLabel: "ד", sLabel: "ש",
     lightMode: "בהיר", darkMode: "כהה", langLabel: "שפה",
-    noLiveTitle: "אין משחק חי כרגע",
-    noLiveBody: "רגע נדיר של שקט. תיהני עד שזה נגמר.",
-    nextKickoff: "שריקת פתיחה הבאה",
+    noLiveTitle: "אין משחק עכשיו",
+    noLiveBody: "רגע נדיר של שקט. תנצלי לפני שזה מתחיל שוב.",
+    nextKickoff: "השריקה הבאה",
     liveDataFrom: "נתונים חיים · ESPN",
-    fixturesTitle: "הבאים בתור (חי מ-ESPN)",
-    noFixtures: "אין משחקים מתוזמנים בימים הקרובים. האינטרנט ימצא במה עוד לצרוח.",
-    recentTitle: "בדיוק הסתיים",
-    intelTitle: "מודיעין הימורים ופיד עסיסי",
+    fixturesTitle: "מה הבא בתור (חי מ-ESPN)",
+    noFixtures: "אין משחקים בימים הקרובים. האינטרנט ימצא על מה עוד לצווח.",
+    recentTitle: "בדיוק נגמר",
+    intelTitle: "הימורים ורכילות טרייה",
     intelSub: "ישר מהכסף — ומהמצלמות במנהרה.",
-    marketsTitle: "שוקי חיזוי",
-    marketsSub: "מה שהכסף חושב. (הכסף לרוב טועה. בקול.)",
-    winnersTitle: "המנצחים הגדולים השבוע",
-    winnersSub: "אנשים שצפו בשלב הבתים במקומך.",
-    dropsTitle: "מיקרו-חדשות עסיסיות",
-    dropsSub: "מתרעננות בכל טעינת עמוד. על לא דבר.",
+    marketsTitle: "שוקי הימורים",
+    marketsSub: "מה שהכסף חושב. (הכסף בדרך כלל טועה. בקול.)",
+    winnersTitle: "מי גרף הכי הרבה השבוע",
+    winnersSub: "האנשים שצפו בשלב הבתים במקומך.",
+    dropsTitle: "רכילות טרייה",
+    dropsSub: "מתעדכן בכל רענון. על לא דבר.",
     totalWagered: "סך ההימורים השבוע",
     volumeLabel: "מחזור",
     priceLabel: "כן",
     minutesAgoLabel: (n: number) => n < 1 ? "ממש עכשיו" : n === 1 ? "לפני דקה" : `לפני ${n} דק'`,
     polymarketOn: "פולימרקט · מחובר",
-    polymarketOff: "פולימרקט · לא זמין — משתמשים בגיבוי",
+    polymarketOff: "פולימרקט · לא זמין — עובדים על גיבוי",
     refreshLabel: "רענון",
     fetchingLabel: "מושכים רכילות טרייה…",
     lastFetchedLabel: "הפיד עודכן",
     compactIntel: "הימורים מהירים",
-    compactWinners: "המנצח הגדול",
-    compactDrops: "חדשות עסיסיות",
+    compactWinners: "מי גרף הכי הרבה",
+    compactDrops: "רכילות",
     gossipTitle: "טור הרכילות",
-    gossipSub: "לוקים בשדה תעופה, מצלמות מנהרה, קומבינציות חשודות — בזמן אמת.",
+    gossipSub: "לוקים בשדה התעופה, מצלמות במנהרה, קומבינציות חשודות — בזמן אמת.",
     verdictHit: "פגיעה",
     verdictMiss: "פספוס",
     verdictChaos: "כאוס",
     socialsLabel: "מהסושיאל",
     playingNowBadge: "משחק כרגע",
-    editorialNote: "תמונת עריכה",
+    editorialNote: "צילום עריכה",
   },
 } as const;
 
@@ -531,7 +531,7 @@ function Index() {
   });
 
   return (
-    <div dir={isHe ? "rtl" : "ltr"} className="relative min-h-screen bg-background text-foreground font-sans selection:bg-primary/30 p-4 md:p-8 overflow-hidden">
+    <div dir={isHe ? "rtl" : "ltr"} className="relative min-h-screen bg-background text-foreground font-sans selection:bg-primary/30 p-3 sm:p-4 md:p-8 overflow-x-hidden">
       <div className="aurora-bg" aria-hidden="true" />
       <div className="grain" aria-hidden="true" />
       <div className="spotlight" aria-hidden="true" />
@@ -588,7 +588,7 @@ function Index() {
 
       <motion.header {...fade(0)} className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-baseline gap-6 border-b-2 border-foreground/60 pb-8 mb-12">
         <div className="space-y-1">
-          <h1 className={`text-5xl md:text-7xl tracking-tight shine-text leading-relaxed break-words overflow-visible ${isHe ? "font-hebrew italic font-semibold" : "font-display italic"}`}>{t.title}</h1>
+          <h1 className={`text-4xl sm:text-5xl md:text-7xl tracking-tight shine-text leading-tight sm:leading-relaxed break-words overflow-visible ${isHe ? "font-hebrew italic font-semibold" : "font-display italic"}`}>{t.title}</h1>
           <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
             {t.edition}
           </p>
@@ -597,21 +597,21 @@ function Index() {
         <motion.div
           whileHover={{ scale: 1.02 }}
           transition={{ type: "spring", stiffness: 260, damping: 18 }}
-          className="relative bg-foreground text-background p-6 rounded-sm min-w-[320px] shadow-[0_20px_60px_-20px_color-mix(in_oklab,var(--primary)_45%,transparent)] ring-1 ring-primary/30"
+          className="relative bg-foreground text-background p-4 md:p-6 rounded-sm w-full md:w-auto md:min-w-[320px] shadow-[0_20px_60px_-20px_color-mix(in_oklab,var(--primary)_45%,transparent)] ring-1 ring-primary/30"
         >
           <p className="font-mono text-[10px] uppercase tracking-tighter mb-2 opacity-60">
             {t.countdown}
           </p>
-          <div dir="ltr" className="flex gap-4 items-end">
-            <div className="text-3xl font-extrabold tabular-nums">
+          <div dir="ltr" className="flex gap-3 md:gap-4 items-end">
+            <div className="text-2xl md:text-3xl font-extrabold tabular-nums">
               {pad(days)}
               <span className="text-[10px] ml-1 font-mono uppercase opacity-50">{t.dLabel}</span>
             </div>
-            <div className="text-3xl font-extrabold tabular-nums">
+            <div className="text-2xl md:text-3xl font-extrabold tabular-nums">
               {pad(hours)}
               <span className="text-[10px] ml-1 font-mono uppercase opacity-50">{t.hLabel}</span>
             </div>
-            <div className="text-3xl font-extrabold tabular-nums">
+            <div className="text-2xl md:text-3xl font-extrabold tabular-nums">
               {pad(minutes)}
               <span className="text-[10px] ml-1 font-mono uppercase opacity-50">{t.mLabel}</span>
             </div>
@@ -620,7 +620,7 @@ function Index() {
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 0.85, y: 0 }}
               transition={{ duration: 0.25 }}
-              className="text-3xl font-extrabold tabular-nums"
+              className="text-2xl md:text-3xl font-extrabold tabular-nums"
             >
               {pad(seconds)}
               <span className="text-[10px] ml-1 font-mono uppercase opacity-50">{t.sLabel}</span>
@@ -630,9 +630,9 @@ function Index() {
         </motion.div>
       </motion.header>
 
-      <main className="relative z-10 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12">
+      <main className="relative z-10 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
         {/* LEFT: intel + odds + peace */}
-        <div className="md:col-span-4 space-y-12">
+        <div className="md:col-span-4 space-y-8 md:space-y-12">
           <motion.section {...fade(0.1)}>
             <h2 className="font-mono text-[11px] uppercase tracking-widest border-b border-border pb-2 mb-4">
               {t.microTitle}
@@ -849,7 +849,7 @@ function Index() {
         </motion.div>
 
         {/* RIGHT: fixtures + tip */}
-        <motion.div {...fade(0.45)} className="md:col-span-3 space-y-12">
+        <motion.div {...fade(0.45)} className="md:col-span-3 space-y-8 md:space-y-12">
           {/* Live match — only renders when there IS a live match on ESPN */}
           {liveMatch ? (
             <motion.a
