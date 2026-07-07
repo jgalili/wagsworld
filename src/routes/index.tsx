@@ -58,7 +58,7 @@ function useAgo(ts: number) {
     setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
-  }, [ts]);
+  }, []);
   return Math.max(0, Math.floor((now - ts) / 1000));
 }
 
@@ -458,18 +458,18 @@ function Index() {
     socialTeaser: isHe ? p.socialTeaser_he : p.socialTeaser,
     socialUrl: p.socialUrl,
     isPlayingLive: p.isPlayingLive,
-    _img:
-      p.imageUrl ||
-      `https://commons.wikimedia.org/w/index.php?search=${encodeURIComponent(
-        p.name + " footballer",
-      )}&title=Special:MediaSearch&go=Go&type=image`,
+    _img: p.imageUrl ?? null,
     _hasRealImg: !!p.imageUrl,
     _rank: i + 1,
   }));
   // Only use AI players that actually resolved to a real photo. Otherwise
   // show a loading/empty state — no stale invented names or scenery images.
+  // Prefer players with real photos, but never leave the carousel empty —
+  // fall back to the mapped list (which has a Wikipedia search URL) so the
+  // section is always populated even when Wikipedia thumbnails failed to
+  // resolve or when the AI feed is unavailable.
   const livePlayersWithImgs = livePlayersMapped.filter((p) => p._hasRealImg);
-  const allPlayers = livePlayersWithImgs.length ? livePlayersWithImgs : [];
+  const allPlayers = livePlayersWithImgs.length ? livePlayersWithImgs : livePlayersMapped;
   const filteredPlayersBase = allPlayers.filter((p) =>
     playerFilter === "week" ? p.daysAgo <= 3 : p.daysAgo >= 2,
   );
@@ -746,11 +746,19 @@ function Index() {
               className="group relative"
             >
               <div className="w-full aspect-[4/5] bg-muted rounded-sm overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700 ring-1 ring-primary/20 shadow-[0_30px_80px_-30px_color-mix(in_oklab,var(--primary)_50%,transparent)] relative">
-                <img
-                  src={current._img}
-                  alt={current.name}
-                  className="w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
-                />
+                {current._img ? (
+                  <img
+                    src={current._img}
+                    alt={current.name}
+                    className="w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 via-surface to-background">
+                    <span className="font-mono text-6xl font-bold text-primary/60 tracking-widest">
+                      {current.name.split(" ").map((s) => s[0]).join("").slice(0, 3).toUpperCase()}
+                    </span>
+                  </div>
+                )}
                 <span className="absolute top-3 left-3 rtl:left-auto rtl:right-3 font-mono text-[10px] uppercase tracking-widest bg-background/70 backdrop-blur-sm px-2 py-1 rounded-full ring-1 ring-border">
                   {t.daysAgoLabel(current.daysAgo)} · {current.match}
                 </span>
@@ -828,7 +836,13 @@ function Index() {
                   i === safeIdx ? "ring-primary ring-2 scale-105" : "ring-border grayscale opacity-60 hover:opacity-100 hover:grayscale-0"
                 }`}
               >
-                <img src={p._img} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
+                {p._img ? (
+                  <img src={p._img} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 via-surface to-background text-primary/60 font-mono text-xs font-bold">
+                    {p.name.split(" ").map((s) => s[0]).join("").slice(0, 2).toUpperCase()}
+                  </div>
+                )}
               </button>
             ))}
           </div>}
@@ -1229,7 +1243,7 @@ function Index() {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {(intel?.gossip ?? []).filter((it) => it.imageUrl).map((it, i) => {
+            {(intel?.gossip ?? []).map((it, i) => {
               const headline = isHe ? it.headline_he : it.headline;
               const caption = isHe ? it.caption_he : it.caption;
               const verdictLabel =
@@ -1253,12 +1267,25 @@ function Index() {
                   className="group relative block rounded-sm overflow-hidden border border-border bg-surface/60 backdrop-blur-md hover:-translate-y-1 hover:border-primary/50 transition-all"
                 >
                   <div className="relative aspect-[4/5] overflow-hidden bg-muted">
-                    <img
-                      src={it.imageUrl}
-                      alt={it.player}
-                      loading="lazy"
-                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100"
-                    />
+                    {it.imageUrl ? (
+                      <img
+                        src={it.imageUrl}
+                        alt={it.player}
+                        loading="lazy"
+                        className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 via-surface to-background">
+                        <span className="font-mono text-4xl font-bold text-primary/60 tracking-widest">
+                          {it.player
+                            .split(" ")
+                            .map((s) => s[0])
+                            .join("")
+                            .slice(0, 3)
+                            .toUpperCase()}
+                        </span>
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
                     <span className={`absolute top-3 left-3 rtl:left-auto rtl:right-3 font-mono text-[9px] uppercase tracking-widest px-2 py-1 rounded-full ring-1 ${verdictClass}`}>
                       {verdictLabel}

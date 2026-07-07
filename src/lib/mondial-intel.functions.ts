@@ -1056,7 +1056,9 @@ export const getMondialIntel = createServerFn({ method: "GET" }).handler(
       polymarketOnline,
       microTips: groundedMicroTips,
       odds: groundedOdds,
-      hotPlayers: groundedHotPlayers,
+      // If ESPN has no live/upcoming matches, keep the static hotPlayers so
+      // the carousel never renders empty.
+      hotPlayers: groundedHotPlayers.length ? groundedHotPlayers : FALLBACK.hotPlayers,
     });
 
     if (!apiKey) {
