@@ -1257,12 +1257,25 @@ function Index() {
                   className="group relative block rounded-sm overflow-hidden border border-border bg-surface/60 backdrop-blur-md hover:-translate-y-1 hover:border-primary/50 transition-all"
                 >
                   <div className="relative aspect-[4/5] overflow-hidden bg-muted">
-                    <img
-                      src={it.imageUrl}
-                      alt={it.player}
-                      loading="lazy"
-                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100"
-                    />
+                    {it.imageUrl ? (
+                      <img
+                        src={it.imageUrl}
+                        alt={it.player}
+                        loading="lazy"
+                        className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 via-surface to-background">
+                        <span className="font-mono text-4xl font-bold text-primary/60 tracking-widest">
+                          {it.player
+                            .split(" ")
+                            .map((s) => s[0])
+                            .join("")
+                            .slice(0, 3)
+                            .toUpperCase()}
+                        </span>
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
                     <span className={`absolute top-3 left-3 rtl:left-auto rtl:right-3 font-mono text-[9px] uppercase tracking-widest px-2 py-1 rounded-full ring-1 ${verdictClass}`}>
                       {verdictLabel}
