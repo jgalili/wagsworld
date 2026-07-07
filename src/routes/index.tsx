@@ -458,11 +458,7 @@ function Index() {
     socialTeaser: isHe ? p.socialTeaser_he : p.socialTeaser,
     socialUrl: p.socialUrl,
     isPlayingLive: p.isPlayingLive,
-    _img:
-      p.imageUrl ||
-      `https://commons.wikimedia.org/w/index.php?search=${encodeURIComponent(
-        p.name + " footballer",
-      )}&title=Special:MediaSearch&go=Go&type=image`,
+    _img: p.imageUrl ?? null,
     _hasRealImg: !!p.imageUrl,
     _rank: i + 1,
   }));
