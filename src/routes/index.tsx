@@ -588,7 +588,7 @@ function Index() {
 
       <motion.header {...fade(0)} className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-baseline gap-6 border-b-2 border-foreground/60 pb-8 mb-12">
         <div className="space-y-1">
-          <h1 className={`text-5xl md:text-7xl tracking-tight shine-text leading-relaxed break-words overflow-visible ${isHe ? "font-hebrew italic font-semibold" : "font-display italic"}`}>{t.title}</h1>
+          <h1 className={`text-4xl sm:text-5xl md:text-7xl tracking-tight shine-text leading-tight sm:leading-relaxed break-words overflow-visible ${isHe ? "font-hebrew italic font-semibold" : "font-display italic"}`}>{t.title}</h1>
           <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
             {t.edition}
           </p>
@@ -849,7 +849,7 @@ function Index() {
         </motion.div>
 
         {/* RIGHT: fixtures + tip */}
-        <motion.div {...fade(0.45)} className="md:col-span-3 space-y-12">
+        <motion.div {...fade(0.45)} className="md:col-span-3 space-y-8 md:space-y-12">
           {/* Live match — only renders when there IS a live match on ESPN */}
           {liveMatch ? (
             <motion.a
