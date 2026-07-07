@@ -531,7 +531,7 @@ function Index() {
   });
 
   return (
-    <div dir={isHe ? "rtl" : "ltr"} className="relative min-h-screen bg-background text-foreground font-sans selection:bg-primary/30 p-4 md:p-8 overflow-hidden">
+    <div dir={isHe ? "rtl" : "ltr"} className="relative min-h-screen bg-background text-foreground font-sans selection:bg-primary/30 p-3 sm:p-4 md:p-8 overflow-x-hidden">
       <div className="aurora-bg" aria-hidden="true" />
       <div className="grain" aria-hidden="true" />
       <div className="spotlight" aria-hidden="true" />
@@ -597,21 +597,21 @@ function Index() {
         <motion.div
           whileHover={{ scale: 1.02 }}
           transition={{ type: "spring", stiffness: 260, damping: 18 }}
-          className="relative bg-foreground text-background p-6 rounded-sm min-w-[320px] shadow-[0_20px_60px_-20px_color-mix(in_oklab,var(--primary)_45%,transparent)] ring-1 ring-primary/30"
+          className="relative bg-foreground text-background p-4 md:p-6 rounded-sm w-full md:w-auto md:min-w-[320px] shadow-[0_20px_60px_-20px_color-mix(in_oklab,var(--primary)_45%,transparent)] ring-1 ring-primary/30"
         >
           <p className="font-mono text-[10px] uppercase tracking-tighter mb-2 opacity-60">
             {t.countdown}
           </p>
-          <div dir="ltr" className="flex gap-4 items-end">
-            <div className="text-3xl font-extrabold tabular-nums">
+          <div dir="ltr" className="flex gap-3 md:gap-4 items-end">
+            <div className="text-2xl md:text-3xl font-extrabold tabular-nums">
               {pad(days)}
               <span className="text-[10px] ml-1 font-mono uppercase opacity-50">{t.dLabel}</span>
             </div>
-            <div className="text-3xl font-extrabold tabular-nums">
+            <div className="text-2xl md:text-3xl font-extrabold tabular-nums">
               {pad(hours)}
               <span className="text-[10px] ml-1 font-mono uppercase opacity-50">{t.hLabel}</span>
             </div>
-            <div className="text-3xl font-extrabold tabular-nums">
+            <div className="text-2xl md:text-3xl font-extrabold tabular-nums">
               {pad(minutes)}
               <span className="text-[10px] ml-1 font-mono uppercase opacity-50">{t.mLabel}</span>
             </div>
@@ -620,7 +620,7 @@ function Index() {
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 0.85, y: 0 }}
               transition={{ duration: 0.25 }}
-              className="text-3xl font-extrabold tabular-nums"
+              className="text-2xl md:text-3xl font-extrabold tabular-nums"
             >
               {pad(seconds)}
               <span className="text-[10px] ml-1 font-mono uppercase opacity-50">{t.sLabel}</span>
@@ -630,9 +630,9 @@ function Index() {
         </motion.div>
       </motion.header>
 
-      <main className="relative z-10 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12">
+      <main className="relative z-10 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
         {/* LEFT: intel + odds + peace */}
-        <div className="md:col-span-4 space-y-12">
+        <div className="md:col-span-4 space-y-8 md:space-y-12">
           <motion.section {...fade(0.1)}>
             <h2 className="font-mono text-[11px] uppercase tracking-widest border-b border-border pb-2 mb-4">
               {t.microTitle}
