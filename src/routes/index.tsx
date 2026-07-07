@@ -58,7 +58,7 @@ function useAgo(ts: number) {
     setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
-  }, [ts]);
+  }, []);
   return Math.max(0, Math.floor((now - ts) / 1000));
 }
 
@@ -468,8 +468,12 @@ function Index() {
   }));
   // Only use AI players that actually resolved to a real photo. Otherwise
   // show a loading/empty state — no stale invented names or scenery images.
+  // Prefer players with real photos, but never leave the carousel empty —
+  // fall back to the mapped list (which has a Wikipedia search URL) so the
+  // section is always populated even when Wikipedia thumbnails failed to
+  // resolve or when the AI feed is unavailable.
   const livePlayersWithImgs = livePlayersMapped.filter((p) => p._hasRealImg);
-  const allPlayers = livePlayersWithImgs.length ? livePlayersWithImgs : [];
+  const allPlayers = livePlayersWithImgs.length ? livePlayersWithImgs : livePlayersMapped;
   const filteredPlayersBase = allPlayers.filter((p) =>
     playerFilter === "week" ? p.daysAgo <= 3 : p.daysAgo >= 2,
   );
@@ -1229,7 +1233,7 @@ function Index() {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {(intel?.gossip ?? []).filter((it) => it.imageUrl).map((it, i) => {
+            {(intel?.gossip ?? []).map((it, i) => {
               const headline = isHe ? it.headline_he : it.headline;
               const caption = isHe ? it.caption_he : it.caption;
               const verdictLabel =
