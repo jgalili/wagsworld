@@ -764,10 +764,10 @@ function Index() {
                 </span>
               </div>
               <div className="mt-4 flex justify-between items-start gap-4">
-                <div>
-                  <p className="font-mono text-[11px] uppercase text-primary font-bold">
-                    #{pad(current._rank)} // {current.country}{current.role ? ` · ${current.role}` : ""}
-                  </p>
+                 <div>
+                   <p dir="ltr" className="font-mono text-[11px] uppercase text-primary font-bold">
+                     #{pad(current._rank)} // {current.country}{current.role ? ` · ${current.role}` : ""}
+                   </p>
                   <h3 className="text-2xl font-display italic">{current.name}</h3>
                   <p className="text-sm mt-2 max-w-[36ch] text-pretty text-muted-foreground">
                     {current.blurb}
@@ -1430,9 +1430,9 @@ function Index() {
                     <p className="mt-2 text-[10px] italic text-muted-foreground border-t border-border/50 pt-2 break-words">
                       &mdash; {vibe}
                     </p>
-                    <span className="absolute top-3 right-3 rtl:right-auto rtl:left-3 font-mono text-[9px] tabular-nums text-muted-foreground opacity-60 group-hover:opacity-100">
-                      #{pad(i + 1)} ↗
-                    </span>
+                     <span dir="ltr" className="absolute top-3 right-3 rtl:right-auto rtl:left-3 font-mono text-[9px] tabular-nums text-muted-foreground opacity-60 group-hover:opacity-100">
+                       #{pad(i + 1)} ↗
+                     </span>
                   </motion.a>
                 );
               })}
