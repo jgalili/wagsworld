@@ -536,6 +536,33 @@ function Index() {
       <div className="grain" aria-hidden="true" />
       <div className="spotlight" aria-hidden="true" />
 
+      {(intelQuery.isLoading || liveQuery.isLoading) && (
+        <motion.div
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-6 bg-background/95 backdrop-blur-md"
+          aria-live="polite"
+          role="status"
+        >
+          <div className="aurora-bg" aria-hidden="true" />
+          <div className="relative z-10 flex flex-col items-center gap-5 px-6 text-center">
+            <div className="relative flex size-14 items-center justify-center">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/40" />
+              <span className="relative inline-flex size-6 rounded-full bg-primary" />
+            </div>
+            <h2 className={`text-3xl sm:text-4xl shine-text ${isHe ? "font-hebrew italic font-semibold" : "font-display italic"}`}>
+              {t.title}
+            </h2>
+            <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground max-w-[36ch]">
+              {t.fetchingLabel}
+            </p>
+            <div className="h-1 w-48 overflow-hidden rounded-full bg-muted">
+              <div className="h-full w-1/2 animate-[marquee_1.2s_linear_infinite] bg-primary" />
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       <div className="relative z-10 max-w-7xl mx-auto flex justify-between items-center gap-4 pb-4 mb-4 flex-wrap">
         <button
           onClick={() => setTheme(theme === "light" ? "dark" : "light")}
