@@ -342,6 +342,31 @@ function FlagGB({ className = "" }: { className?: string }) {
   );
 }
 
+const TEAM_HE_UI: Record<string, string> = {
+  Argentina: "ארגנטינה",
+  Belgium: "בלגיה",
+  Colombia: "קולומביה",
+  Egypt: "מצרים",
+  England: "אנגליה",
+  France: "צרפת",
+  Morocco: "מרוקו",
+  Norway: "נורבגיה",
+  Portugal: "פורטוגל",
+  Spain: "ספרד",
+  Switzerland: "שווייץ",
+  "United States": "ארצות הברית",
+};
+
+function displayTeam(team: string, lang: Lang) {
+  return lang === "he" ? TEAM_HE_UI[team] ?? team : team;
+}
+
+function displayMatch(home: string, away: string, lang: Lang) {
+  return lang === "he"
+    ? `${displayTeam(home, lang)} נגד ${displayTeam(away, lang)}`
+    : `${home} vs ${away}`;
+}
+
 function Index() {
   const { days, hours, minutes, seconds } = useCountdown(FINAL_DATE);
   const pad = (n: number) => n.toString().padStart(2, "0");
@@ -387,19 +412,29 @@ function Index() {
     : [];
   const liveMicroFallback: readonly string[] = liveMatch
     ? [
-        `${liveMatch.home.name} vs ${liveMatch.away.name} is live at ${liveMatch.home.score || 0}-${liveMatch.away.score || 0}. That is the actual news.`,
+        isHe
+          ? `${displayMatch(liveMatch.home.name, liveMatch.away.name, lang)} חי עכשיו ב-${liveMatch.home.score || 0}-${liveMatch.away.score || 0}. זאת החדשה האמיתית.`
+          : `${liveMatch.home.name} vs ${liveMatch.away.name} is live at ${liveMatch.home.score || 0}-${liveMatch.away.score || 0}. That is the actual news.`,
         nextMatch
-          ? `Next: ${nextMatch.home.name} vs ${nextMatch.away.name}. No eliminated-team cosplay required.`
+          ? isHe
+            ? `הבא בתור: ${displayMatch(nextMatch.home.name, nextMatch.away.name, lang)}. בלי קוספליי של נבחרות שכבר עפו.`
+            : `Next: ${nextMatch.home.name} vs ${nextMatch.away.name}. No eliminated-team cosplay required.`
           : "Next fixture is still loading from ESPN. Do not trust recycled tournament gossip.",
       ]
     : nextMatch
       ? [
-          `Next: ${nextMatch.home.name} vs ${nextMatch.away.name} at ${fmtKickoff(nextMatch.kickoffISO, lang)}.`,
+          isHe
+            ? `הבא בתור: ${displayMatch(nextMatch.home.name, nextMatch.away.name, lang)} ב-${fmtKickoff(nextMatch.kickoffISO, lang)}.`
+            : `Next: ${nextMatch.home.name} vs ${nextMatch.away.name} at ${fmtKickoff(nextMatch.kickoffISO, lang)}.`,
           liveData?.recent[0]
-            ? `${liveData.recent[0].home.name} ${liveData.recent[0].home.score}-${liveData.recent[0].away.score} ${liveData.recent[0].away.name} is finished. Update all takes accordingly.`
-            : "Live tournament feed is loading. Stale Brazil hair news has been removed.",
+            ? isHe
+              ? `${displayTeam(liveData.recent[0].home.name, lang)} ${liveData.recent[0].home.score}-${liveData.recent[0].away.score} ${displayTeam(liveData.recent[0].away.name, lang)} נגמר. לעדכן את כל הדעות בהתאם.`
+              : `${liveData.recent[0].home.name} ${liveData.recent[0].home.score}-${liveData.recent[0].away.score} ${liveData.recent[0].away.name} is finished. Update all takes accordingly.`
+            : isHe
+              ? "הפיד החי עדיין נטען. רכילות ישנה על שיער של ברזיל ירדה מהמסך."
+              : "Live tournament feed is loading. Stale Brazil hair news has been removed.",
         ]
-      : ["Live tournament feed is loading. Stale Brazil hair news has been removed."];
+      : [isHe ? "הפיד החי עדיין נטען. רכילות ישנה על שיער של ברזיל ירדה מהמסך." : "Live tournament feed is loading. Stale Brazil hair news has been removed."];
   const liveOddsFallback = liveTeamNames.slice(0, 5).map((team, i) => ({
     team,
     label: team,
