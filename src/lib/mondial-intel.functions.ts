@@ -445,38 +445,46 @@ function matchupLabel(match: GroundedMatch) {
   return `${match.home} vs ${match.away}`;
 }
 
+function heTeam(team: string) {
+  return TEAM_HE[team] ?? team;
+}
+
+function matchupLabelHe(match: GroundedMatch) {
+  return `${heTeam(match.home)} נגד ${heTeam(match.away)}`;
+}
+
 function buildLiveMicroTips(liveMatches: GroundedMatch[], upcomingMatches: GroundedMatch[], recentMatches: GroundedMatch[]): MicroTip[] {
   const tips: MicroTip[] = [];
   const live = liveMatches[0];
   if (live) {
     tips.push({
       en: `${matchupLabel(live)} is live at ${live.homeScore}-${live.awayScore}; say "compact mid-block" and look busy.`,
-      he: `${live.home} נגד ${live.away} חי עכשיו ב-${live.homeScore}-${live.awayScore}; תגידי "בלוק אמצעי צפוף" ותיראי עסוקה.`,
+      he: `${matchupLabelHe(live)} חי עכשיו ב-${live.homeScore}-${live.awayScore}; תגידי "בלוק אמצעי צפוף" ותיראי עסוקה.`,
     });
     tips.push({
       en: `${live.home} and ${live.away} are the only acceptable live gossip targets right now.`,
-      he: `${live.home} ו-${live.away} הן מטרות הרכילות החיות היחידות כרגע.`,
+      he: `${heTeam(live.home)} ו${heTeam(live.away)} הן מטרות הרכילות החיות היחידות כרגע.`,
     });
   }
   const next = upcomingMatches[0];
   if (next) {
     tips.push({
       en: `Next up: ${matchupLabel(next)}. Prepare one opinion about pressing and one snack exit plan.`,
-      he: `הבא בתור: ${next.home} נגד ${next.away}. להכין דעה אחת על לחץ ותוכנית מילוט לנשנושים.`,
+      he: `הבא בתור: ${matchupLabelHe(next)}. להכין דעה אחת על לחץ ותוכנית מילוט לנשנושים.`,
     });
   }
   for (const match of recentMatches) {
     if (!match.loser || !match.winner) continue;
     tips.push({
       en: `${match.loser} are out after ${match.homeScore}-${match.awayScore} vs ${match.winner}; update the group chat accordingly.`,
-      he: `${match.loser} הודחה אחרי ${match.homeScore}-${match.awayScore} מול ${match.winner}; לעדכן את הווטסאפ בהתאם.`,
+      he: `${heTeam(match.loser)} הודחה אחרי ${match.homeScore}-${match.awayScore} מול ${heTeam(match.winner)}; לעדכן את הווטסאפ בהתאם.`,
     });
     if (tips.length >= 5) break;
   }
   for (const match of upcomingMatches.slice(1)) {
     tips.push({
       en: `${matchupLabel(match)} is still pending, so any title takes must include both teams.`,
-      he: `${match.home} נגד ${match.away} עדיין מחכה, אז כל תחזית זכייה חייבת לכלול את שתיהן.`,
+      he: `${matchupLabelHe(match)} עדיין מחכה, אז כל תחזית זכייה חייבת לכלול את שתיהן.`,
     });
     if (tips.length >= 5) break;
   }
