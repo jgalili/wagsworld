@@ -672,11 +672,11 @@ function Index() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.15 + i * 0.08, duration: 0.5 }}
                 >
-                  <p className="text-sm leading-relaxed">
-                    <span className="text-primary font-bold mx-2 tabular-nums">
+                  <p className="text-sm leading-relaxed flex items-baseline gap-2">
+                    <span dir="ltr" className="text-primary font-bold tabular-nums shrink-0">
                       {pad(i + 1)}
                     </span>
-                    {n}
+                    <span>{n}</span>
                   </p>
                 </motion.div>
               ))}
@@ -792,8 +792,11 @@ function Index() {
               </div>
               <div className="mt-4 flex justify-between items-start gap-4">
                  <div>
-                   <p dir="ltr" className="font-mono text-[11px] uppercase text-primary font-bold">
-                     #{pad(current._rank)} // {current.country}{current.role ? ` · ${current.role}` : ""}
+                   <p className="font-mono text-[11px] uppercase text-primary font-bold inline-flex items-center gap-1.5 flex-wrap">
+                     <span dir="ltr">#{pad(current._rank)}</span>
+                     <span aria-hidden="true">//</span>
+                     <span dir="auto">{current.country}</span>
+                     {current.role && <span dir="auto">· {current.role}</span>}
                    </p>
                   <h3 className="text-2xl font-display italic">{current.name}</h3>
                   <p className="text-sm mt-2 max-w-[36ch] text-pretty text-muted-foreground">
@@ -1457,8 +1460,9 @@ function Index() {
                     <p className="mt-2 text-[10px] italic text-muted-foreground border-t border-border/50 pt-2 break-words">
                       &mdash; {vibe}
                     </p>
-                     <span dir="ltr" className="absolute top-3 right-3 rtl:right-auto rtl:left-3 font-mono text-[9px] tabular-nums text-muted-foreground opacity-60 group-hover:opacity-100">
-                       #{pad(i + 1)} ↗
+                     <span className="absolute top-3 right-3 rtl:right-auto rtl:left-3 font-mono text-[9px] tabular-nums text-muted-foreground opacity-60 group-hover:opacity-100 inline-flex items-center gap-1">
+                       <span dir="ltr">#{pad(i + 1)}</span>
+                       <span aria-hidden="true">↗</span>
                      </span>
                   </motion.a>
                 );
